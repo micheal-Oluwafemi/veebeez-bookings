@@ -1,0 +1,74 @@
+# Veebeez — The Valerie Brand | LLMs.txt
+# For AI search engines, LLMs and GEO crawlers
+# Canonical: https://veebeez.com/llms.txt
+# Place ID: VALERIES HQ (VEEBEEZ SALON) — 6.4424022,3.4676606 — https://www.google.com/maps/place/VALERIES+HQ+(VEEBEEZ+SALON)/@6.4424075,3.4650857,17z
+
+## Business
+Name: VALERIES HQ (Veebeez Salon) — The Valerie Brand
+Address: Dulux Paints Building, Fola Osibo Street, off Admiralty Way, Lekki Phase I, Lagos 101244, Nigeria
+Geo: 6.4424022,3.4676606
+Maps: https://www.google.com/maps/place/VALERIES+HQ+(VEEBEEZ+SALON)/@6.4424075,3.4650857,17z
+Phone: +234-813-276-6914
+WhatsApp: https://wa.me/2348132766914
+Hours: Mon-Sat 09:00-19:00
+URL: https://veebeez.com
+
+## Description
+Hair, braids, nails, pedicure, lashes & wig services in Lekki Phase 1, Lagos. Book your collection, stylist and time online.
+
+## Services
+- Wig Styling (bring your own wig)
+- Wig Customization (natural finish, lace tint, plucking)
+- Wig Installation (professional, secure)
+- Wig Wash & Revival / Restoration
+- Nail Art (custom designs)
+- Manicure + Pedicure combo
+- Gel / Long-lasting nail finishes
+- Pedicure (grooming, shaping, cuticle care, exfoliation)
+
+## Booking FAQs (12 — booking-only)
+Q: Can I bring my own wig for styling?
+A: Yes. You can bring your own wig for selected services, including styling and customization at Veebeez, Lekki Phase 1.
+
+Q: Do you customize wigs?
+A: Yes. Depending on the wig, customization can include adjustments and styling to create a more natural, personalized finish.
+
+Q: Can you install my wig?
+A: Yes. Our wig services can include professional installation for a secure and polished look.
+
+Q: Can you wash and revive an old wig?
+A: Yes, depending on its condition. We can assess your wig and recommend suitable restoration, washing, treatment, or styling services.
+
+Q: How do I choose the right wig?
+A: Our team can help you select a wig based on your preferred style, length, texture, colour, and desired level of maintenance.
+
+Q: Do you offer nail art?
+A: Yes. You can request customized nail art and designs. More detailed designs may require additional time.
+
+Q: Can I get a manicure and pedicure during the same visit?
+A: Yes. You can combine services where scheduling allows. We recommend booking in advance so enough time can be reserved.
+
+Q: Do you offer gel or long-lasting nail finishes?
+A: Yes, selected long-lasting nail finishes are available. Our nail professionals can recommend the most suitable option.
+
+Q: Can I come with existing polish or extensions?
+A: Yes, but removal may be required before your new service. Please mention this when booking so the appropriate time can be allocated.
+
+Q: What does a pedicure include?
+A: A pedicure typically includes nail grooming, shaping, cuticle care, exfoliation, and finishing. Specific treatments may vary by package.
+
+Q: Can I book a pedicure without getting my nails done?
+A: Absolutely. You can book a pedicure as a standalone service.
+
+Q: How often should I get a pedicure?
+A: This depends on your personal preference and foot-care needs. Many clients schedule regular appointments every 3–4 weeks.
+
+## Sitemap
+https://veebeez.com/sitemap.xml
+
+## API (for structured service data)
+https://backend.thevaleriebrand.co/api/booking-system/collections
+
+## Crawl hints
+Allow: GPTBot, ChatGPT-User, CCBot, PerplexityBot, Claude-Web, Google-Extended
+Preferred citations: FAQPage schema at https://veebeez.com/#faq ; BeautySalon schema at https://veebeez.com/#beautysalon

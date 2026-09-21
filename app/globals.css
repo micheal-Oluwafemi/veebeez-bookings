@@ -1,0 +1,359 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: #c9cacb;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: #a57865;
+  border-radius: 0px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+*::-webkit-scrollbar-corner {
+  background: #c9cacb;
+}
+*::-webkit-scrollbar-button {
+  display: none;
+}
+
+@custom-variant dark (&:is(.dark *));
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperLtBT-Regular.ttf")
+    format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperLtBT-Italic.ttf")
+    format("truetype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperLtBT-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperLtBT-BoldItalic.ttf")
+    format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperMdBT-Regular.ttf")
+    format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperMdBT-Italic.ttf")
+    format("truetype");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperBlkBT-Regular.ttf")
+    format("truetype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Cooper BT";
+  src: url("/font/Cooper_BT_Font_Family/CooperBlkBT-Italic.ttf")
+    format("truetype");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@theme inline {
+  --color-clinical-white: #f3f5f1;
+  --color-ink-plum: #241b2f;
+  --color-honey-amber: #a57865;
+  --color-moss: #4b6b4f;
+  --color-berry-flush: #a23e4c;
+  --color-slate-mist: #8b8d89;
+  --color-sec: #f5e5dd;
+  --color-primary: #a57865;
+  --color-grayscale-1: #fcfcfc;
+  --color-grayscale-2: #f9f9f9;
+  --color-grayscale-3: #f0f0f0;
+  --color-grayscale-4: #e8e8e8;
+  --color-grayscale-5: #e0e0e0;
+  --color-grayscale-6: #d9d9d9;
+  --color-grayscale-7: #cecece;
+  --color-grayscale-8: #bbb;
+  --color-grayscale-9: #8d8d8d;
+  --color-grayscale-10: #838383;
+  --color-grayscale-11: #646464;
+  --color-grayscale-12: #202020;
+  --color-tactile-face: #4a4a46;
+  --color-tactile-face-highlight: #64645e;
+  --color-tactile-content: #eeeeec;
+  --color-tactile-base: #292926;
+  --color-tactile-base-shadow: #141412;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --font-cooper: "Cooper BT";
+  --font-plus-jakarta-sans: var(--font-plus-jakarta-sans);
+  --font-dmsans: var(--font-plus-jakarta-sans);
+  --font-inter: var(--font-sans);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  --background: #faf7f3;
+  --foreground: #483630;
+  --card: #faf7f3;
+  --card-foreground: #483630;
+  --popover: #faf7f3;
+  --popover-foreground: #483630;
+  --primary: #a57865;
+  --primary-foreground: #faf7f3;
+  --secondary: #e8ddd0;
+  --secondary-foreground: #483630;
+  --muted: #e8ddd0;
+  --muted-foreground: #8b7355;
+  --accent: #c9a96e;
+  --accent-foreground: #1a1510;
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: #e8ddd0;
+  --input: #e8ddd0;
+  --ring: #a57865;
+  --chart-1: #a57865;
+  --chart-2: #a78a6f;
+  --chart-3: #a57865;
+  --chart-4: #c9a96e;
+  --chart-5: #c9cacb;
+  --radius: 0.625rem;
+  --sidebar: #faf7f3;
+  --sidebar-foreground: #483630;
+  --sidebar-primary: #a57865;
+  --sidebar-primary-foreground: #faf7f3;
+  --sidebar-accent: #e8ddd0;
+  --sidebar-accent-foreground: #483630;
+  --sidebar-border: #e8ddd0;
+  --sidebar-ring: #a57865;
+  --skel-pulse-min: 0.45;
+  --skel-pulse-dur: 1s;
+  --skel-reveal-dur: 400ms;
+  --skel-reveal-ease: ease;
+  --skel-reveal-blur: 6px;
+}
+
+.dark {
+  --background: #faf7f3;
+  --foreground: #483630;
+  --card: #faf7f3;
+  --card-foreground: #483630;
+  --popover: #faf7f3;
+  --popover-foreground: #483630;
+  --primary: #a57865;
+  --primary-foreground: #faf7f3;
+  --secondary: #e8ddd0;
+  --secondary-foreground: #483630;
+  --muted: #e8ddd0;
+  --muted-foreground: #8b7355;
+  --accent: #c9a96e;
+  --accent-foreground: #1a1510;
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: #e8ddd0;
+  --input: #e8ddd0;
+  --ring: #a57865;
+  --chart-1: #a57865;
+  --chart-2: #a78a6f;
+  --chart-3: #a57865;
+  --chart-4: #c9a96e;
+  --chart-5: #c9cacb;
+  --sidebar: #faf7f3;
+  --sidebar-foreground: #a57865;
+  --sidebar-primary: #a57865;
+  --sidebar-primary-foreground: #faf7f3;
+  --sidebar-accent: #e8ddd0;
+  --sidebar-accent-foreground: #a57865;
+  --sidebar-border: #e8ddd0;
+  --sidebar-ring: #a57865;
+  --skel-pulse-min: 0.45;
+  --skel-pulse-dur: 1s;
+  --skel-reveal-dur: 400ms;
+  --skel-reveal-ease: ease;
+  --skel-reveal-blur: 6px;
+}
+
+/* Lenis recommended CSS */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-plus-jakarta-sans;
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  .block-spacing {
+    @apply mx-auto w-full max-w-screen-2xl px-4;
+  }
+}
+
+.t-skel {
+  position: relative;
+  display: grid;
+}
+
+.t-skel-skeleton,
+.t-skel-content {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+.t-skel-skeleton {
+  z-index: 1;
+  opacity: 1;
+  filter: blur(0);
+  pointer-events: none;
+  transition:
+    opacity var(--skel-reveal-dur) var(--skel-reveal-ease),
+    filter var(--skel-reveal-dur) var(--skel-reveal-ease);
+}
+
+.t-skel-content {
+  z-index: 2;
+  opacity: 0;
+  filter: blur(var(--skel-reveal-blur));
+  transition:
+    opacity var(--skel-reveal-dur) var(--skel-reveal-ease),
+    filter var(--skel-reveal-dur) var(--skel-reveal-ease);
+}
+
+.t-skel.is-revealed .t-skel-skeleton {
+  opacity: 0;
+  filter: blur(var(--skel-reveal-blur));
+}
+.t-skel.is-revealed .t-skel-content {
+  opacity: 1;
+  filter: blur(0);
+}
+
+.t-skel.is-settled .t-skel-skeleton {
+  display: none;
+}
+
+.t-skel-skeleton.is-pulsing > * {
+  animation: veebeez-skel-pulse var(--skel-pulse-dur) ease-in-out 1;
+}
+@keyframes veebeez-skel-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: var(--skel-pulse-min);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-skel-skeleton,
+  .t-skel-content {
+    transition: none !important;
+  }
+  .t-skel-skeleton.is-pulsing > * {
+    animation: none !important;
+  }
+}
+
+button:active:not(:disabled),
+a:active:not([aria-disabled="true"]) {
+  transform: scale(0.96);
+  transition: transform 150ms ease-out;
+}
+
+button:not(:active):not(:disabled),
+a:not(:active):not([aria-disabled="true"]) {
+  transition: transform 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled),
+  a:active:not([aria-disabled="true"]) {
+    transform: none;
+    transition: none;
+  }
+  button:not(:active):not(:disabled),
+  a:not(:active):not([aria-disabled="true"]) {
+    transition: none;
+  }
+}
