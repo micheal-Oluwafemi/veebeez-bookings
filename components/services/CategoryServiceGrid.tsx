@@ -223,7 +223,7 @@ export default function CategoryServiceGrid() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder='Search services...'
                   aria-label='Search services'
-                  className='h-10 w-full rounded-full border border-[#e8ddd0] bg-white pl-10 pr-10 font-plus-jakarta-sans text-sm text-[#483630] placeholder:text-[#8a6a5a]/50 outline-none transition focus:border-[#a57865]/50 focus:ring-2 focus:ring-[#a57865]/10'
+                  className='h-10 w-full rounded-full border border-[#e8ddd0] bg-white pl-10 pr-10 font-plus-jakarta-sans text-base text-[#483630] placeholder:text-[#8a6a5a]/50 outline-none transition focus:border-[#a57865]/50 focus:ring-2 focus:ring-[#a57865]/10'
                 />
                 {searchQuery && (
                   <button
