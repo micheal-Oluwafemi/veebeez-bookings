@@ -27,7 +27,9 @@ import { useBookingStore } from "@/store/useBookingStore";
 import { AnimatePresence, motion } from "framer-motion";
 import LoginForm from "./auth/LoginForm";
 import { CgMenuRight } from "react-icons/cg";
+import { FiInstagram } from "react-icons/fi";
 import RegisterForm from "./auth/RegisterForm";
+import { BUSINESS } from "@/lib/seo/constants";
 
 const NAV_LINKS = [
   { href: "/", label: "Book Appointment", icon: CalendarDays },
@@ -181,6 +183,15 @@ export default function Navbar() {
 
           {/* Right: Auth + Search */}
           <div className='flex shrink-0 items-center gap-1.5 md:gap-2'>
+            <a
+              href={BUSINESS.instagram}
+              target='_blank'
+              rel='noopener noreferrer'
+              aria-label='Veebeez on Instagram'
+              title='Veebeez on Instagram'
+              className='hidden size-9 items-center justify-center rounded-full border border-[#EDE3D3] bg-white text-[#3A2A22] transition-colors duration-200 hover:border-[#A57865]/40 hover:text-[#A57865] md:inline-flex'>
+              <FiInstagram size={16} />
+            </a>
             <Link
               href='/search-bookings'
               className={`hidden items-center gap-1.5 rounded-full border px-2.5 py-2 md:px-3 lg:px-4 font-plus-jakarta-sans text-[13px] lg:text-sm font-medium whitespace-nowrap transition-colors duration-200 md:inline-flex ${
@@ -312,6 +323,14 @@ export default function Navbar() {
               />
               Find my bookings
             </Link>
+            <a
+              href={BUSINESS.instagram}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='flex items-center gap-3 rounded-xl border border-[#EDE3D3] bg-white px-4 py-3.5 font-plus-jakarta-sans text-[15px] font-medium text-[#3A2A22] transition-colors duration-200'>
+              <FiInstagram size={16} className='text-[#C9A96E]' />
+              {BUSINESS.instagramHandle}
+            </a>
           </div>
 
           <div className='border-t border-[#EDE3D3] bg-white px-4 py-4'>

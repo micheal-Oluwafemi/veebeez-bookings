@@ -18,9 +18,11 @@ import Step1Services from "@/components/steps/Step1Services";
 import Step2ConfigureServices from "@/components/steps/Step2ConfigureServices";
 import Step4Details from "@/components/steps/Step4Details";
 import BookingBreadcrumbs from "@/components/navigation/BookingBreadcrumbs";
+import BookingBackButton from "@/components/navigation/BookingBackButton";
 import MobileBookingActionBar from "@/components/MobileBookingActionBar";
 import { showToast } from "@/components/toast/app-toast";
 import { useQuote } from "@/hooks/useQuote";
+import { getEffectiveDepositMin } from "@/lib/booking/deposit";
 import { ApiError } from "@/lib/https";
 import { HomeButton } from "@/components/home-button";
 import type { Collection } from "@/types/booking";
@@ -148,7 +150,8 @@ function CollectionParamSync() {
     // read fresh state via getState() to avoid effect re-trigger on step changes
     const state = useBookingStore.getState();
     if (state.selectedCollectionSlug !== matched.slug) {
-      // setCollectionSlug already resets cart/stylist/date and forces currentStep=1
+      // setCollectionSlug switches the browsed collection (cart is kept)
+      // and forces currentStep=1
       state.setCollectionSlug(matched.slug);
     } else if (state.currentStep !== 1) {
       // already on correct collection but not on step 1 (e.g. persisted step 3) -> go to 1
@@ -181,6 +184,35 @@ export default function page() {
 
   // Auth gate is triggered by CartPanel/Mobile when attempting Step2→3 while unauthenticated; no auto-reopen for guest (transient)
 
+  // Guarantee the viewport resets to the top on every step transition.
+  // Scrolling *before* nextStep()/setStep() is unreliable: the new step's
+  // content renders after the scroll starts, and Lenis can cancel raw
+  // window.scrollTo calls — so the page sometimes lands mid-step. Waiting
+  // for paint and going through Lenis (instant, not smooth) fixes that.
+  const prevStepRef = useRef(currentStep);
+  useEffect(() => {
+    if (prevStepRef.current === currentStep) return;
+    prevStepRef.current = currentStep;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const lenis = (
+          window as unknown as {
+            lenis?: {
+              scrollTo: (to: number, options?: { immediate?: boolean }) => void;
+            };
+          }
+        ).lenis;
+        if (lenis?.scrollTo) lenis.scrollTo(0, { immediate: true });
+        else window.scrollTo({ top: 0, behavior: "auto" });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [currentStep]);
+
   const showMobileReview = isMobile && showCartReview && currentStep === 3;
   // Only show mobile bar after a service is selected (cart not empty)
   const showMobileActionBar =
@@ -194,7 +226,7 @@ export default function page() {
       handleReviewConfirm();
       return;
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // viewport reset is handled by the currentStep effect (post-transition)
     nextStep();
   };
 
@@ -207,7 +239,8 @@ export default function page() {
       }
       if (!quote)
         throw new Error("Quote not available. Please select services again.");
-      const depositMin = quote.deposit_amount;
+      // deposit_amount: 0 means no partial deposit — full payment is the minimum
+      const depositMin = getEffectiveDepositMin(quote);
       const amountToPay = depositInput ?? depositMin;
       if (amountToPay < depositMin) {
         throw new Error(
@@ -354,9 +387,9 @@ export default function page() {
               return;
             }
             if (useBookingStore.getState().currentStep === 2) {
+              // step transition scrolls via the currentStep effect
               useBookingStore.getState().nextStep();
             }
-            window.scrollTo({ top: 0, behavior: "smooth" });
           }, 250);
         }}
       />
@@ -373,7 +406,12 @@ export default function page() {
           {/* <HomeButton label='Go Back' /> */}
 
           <div className='relative mt-5'>
-            {!showMobileReview && <BookingBreadcrumbs />}
+            {!showMobileReview && (
+              <>
+                <BookingBackButton />
+                <BookingBreadcrumbs />
+              </>
+            )}
 
             {showMobileReview ? (
               <CartPanel

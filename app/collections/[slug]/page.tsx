@@ -26,15 +26,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const col = await fetchCollectionBySlug(slug);
   if (!col) return { title: "Collection not found | Veebeez" };
-  const title = col.meta_title ?? `${col.name} in Lekki Phase 1, Lagos | Veebeez — The Valerie Brand`;
+  const serviceCount = getServiceCount(col);
+  const categoryCount = col.categories?.length ?? 0;
+  const title = `${col.name} in Lekki | Veebeez — The Valerie Brand`;
   const description =
-    col.meta_description ??
     col.description ??
-    `Book ${col.name} at Veebeez (VALERIES HQ) — Fola Osibo Street, Lekki Phase 1, Lagos. ${col.service_count ?? ""} services · Mon–Sat 9AM–7PM. Reserve your stylist & time online.`.trim();
+    col.meta_description ??
+    `Book ${col.name} services at Veebeez (VALERIES HQ) — ${serviceCount} services across ${categoryCount} ${categoryCount === 1 ? "category" : "categories"}. Fola Osibo Street, Lekki Phase 1. Mon–Sat 9AM–7PM. Reserve your stylist & time online.`;
   const img = col.image_url ? getOptimizedImageUrl(col.image_url) : `${SITE_URL}/imgs/image-4.webp`;
   const url = `${SITE_URL}/collections/${col.slug}`;
   return {
-    title,
+    // absolute: the title already ends with the brand, so the layout's
+    // "%s | Veebeez" template must not append a second "| Veebeez"
+    title: { absolute: title },
     description: description.slice(0, 160),
     alternates: { canonical: url },
     openGraph: {
@@ -49,6 +53,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: { card: "summary_large_image", title, description: description.slice(0, 160), images: [img] },
     keywords: [col.name, `${col.name} Lekki`, `${col.name} Lagos`, "Veebeez", "Fola Osibo", "Lekki Phase 1"],
   };
+}
+
+/**
+ * The collection-detail endpoint omits `service_count`, so derive it from
+ * the returned categories (falling back to the field when present).
+ */
+function getServiceCount(col: Collection): number {
+  if (col.service_count && col.service_count > 0) return col.service_count;
+  return (col.categories ?? []).reduce(
+    (n, cat) => n + (cat.services?.length ?? 0),
+    0,
+  );
 }
 
 function toJsonLd(col: Collection) {
@@ -146,8 +162,13 @@ export default async function CollectionPage({ params }: Props) {
                 Veebeez · {BUSINESS.address.short} · Mon–Sat 9AM–7PM
               </p>
               <h1 className='mt-2 font-cooper text-[30px] md:text-[42px] leading-[1.05] text-[#1a1510]'>{col.name} in Lekki Phase 1</h1>
+              {col.description ? (
+                <p className='mt-3 max-w-xl font-plus-jakarta-sans text-[15px] leading-relaxed text-[#483630]'>
+                  {col.description}
+                </p>
+              ) : null}
               <p className='mt-3 max-w-xl font-plus-jakarta-sans text-[15px] leading-relaxed text-[#483630]'>
-                {col.description ?? col.meta_description ?? `Book ${col.name.toLowerCase()} services at VALERIES HQ (Veebeez) — ${BUSINESS.address.formatted}. Choose your services, stylist and time online.`}
+                Book {col.name.toLowerCase()} services at VALERIES HQ (Veebeez) — {BUSINESS.address.formatted}. Choose your services, stylist and time online.
               </p>
               <div className='mt-4 flex flex-wrap gap-2'>
                 <Link
@@ -164,7 +185,7 @@ export default async function CollectionPage({ params }: Props) {
                 </a>
               </div>
               <p className='mt-3 font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
-                {categories.length} categories · {col.service_count ?? 0} services · {BUSINESS.telephone}
+                {categories.length} categories · {getServiceCount(col)} services · {BUSINESS.telephone}
               </p>
             </div>
             <div className='relative h-[220px] md:h-[300px] overflow-hidden rounded-2xl border border-[#EDE3D3] bg-white'>

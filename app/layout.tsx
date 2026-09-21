@@ -29,11 +29,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Veebeez — The Valerie Brand | Hair, Braids, Nails & Wig Services in Lekki, Lagos",
+    default: "Veebeez Salon Lekki | Hair, Braids, Nails & Wigs",
     template: "%s | Veebeez",
   },
   description:
-    "Book hair, braids, nails, pedicure, lashes & wig styling at VALERIES HQ (Veebeez) — Fola Osibo Street, Lekki Phase 1, Lagos. Bring your own wig, get gel nails, pedicure & installation. Mon–Sat 9AM–7PM. Secure your spot in seconds.",
+    "Book hair, braids, nails, pedicure, lashes & wig styling at Veebeez — Fola Osibo Street, Lekki Phase 1, Lagos. Mon–Sat 9AM–7PM. Secure your spot in seconds.",
   keywords: [
     "Veebeez",
     "Valerie Brand",
@@ -55,9 +55,9 @@ export const metadata: Metadata = {
     locale: "en_NG",
     url: SITE_URL,
     siteName: BUSINESS.legalName,
-    title: "Veebeez — The Valerie Brand | Hair, Braids, Nails & Wig Services in Lekki, Lagos",
+    title: "Veebeez Salon Lekki | Hair, Braids, Nails & Wigs",
     description:
-      "Book hair, braids, nails, pedicure, lashes & wig services at VALERIES HQ (Veebeez) — Fola Osibo Street, Lekki Phase 1. Bring your own wig, customization & installation.",
+      "Book hair, braids, nails, pedicure, lashes & wig services at Veebeez — Fola Osibo Street, Lekki Phase 1. Secure your spot in seconds.",
     images: [
       {
         url: "/og-img.jpg",
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Veebeez — The Valerie Brand | Lekki Phase 1, Lagos",
+    title: "Veebeez Salon Lekki | Hair, Braids, Nails & Wigs",
     description: "Book hair, braids, nails, pedicure & wig services at Veebeez — Fola Osibo Street, Lekki.",
     images: ["/og-img.jpg"],
   },

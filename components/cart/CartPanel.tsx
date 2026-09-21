@@ -30,11 +30,18 @@ import { useBookingStore } from "@/store/useBookingStore";
 import { useCustomerAuthStore } from "@/store/useCustomerAuthStore";
 import type { Collection, Stylist } from "@/types/booking";
 import { RxShuffle } from "react-icons/rx";
+import { FiInstagram } from "react-icons/fi";
 import AuthGate from "@/components/auth/AuthGate";
 import { useQuote } from "@/hooks/useQuote";
 import { PriceInput } from "@/components/PriceInput";
 import { ErrorState } from "@/components/ui/error-state";
 import { getOptimizedImageUrl, shouldUnoptimize } from "@/lib/image";
+import { BUSINESS } from "@/lib/seo/constants";
+import {
+  requestFocusNextUnscheduled,
+  requestNextService,
+} from "@/lib/booking/schedule-focus";
+import { getEffectiveDepositMin } from "@/lib/booking/deposit";
 import Image from "next/image";
 
 interface CartPanelProps {
@@ -118,6 +125,7 @@ export default function CartPanel({
   const isNoPreference = allConfigured && cart.length > 0 && cart.every((c) => c.stylist_id === null) && cart.every((c) => c.stylist_id === cart[0].stylist_id);
 
   const currentStep = useBookingStore((s) => s.currentStep);
+  const configuringItemIndex = useBookingStore((s) => s.configuringItemIndex);
   const confirmation = useBookingStore((s) => s.confirmation);
   const nextStep = useBookingStore((s) => s.nextStep);
   const confirmBooking = useBookingStore((s) => s.confirmBooking);
@@ -137,22 +145,22 @@ export default function CartPanel({
     if (cart.length > 0) setActionError("");
   }, [cart.length, allConfigured]);
 
-  // sync deposit input default to quote — when deposit is 0, default to full total
+  // sync deposit input default — and refill it whenever a recalculation
+  // leaves it empty (deposit_amount: 0 means full payment is the minimum,
+  // so an empty field with a quoted minimum is never valid)
   useEffect(() => {
-    if (quote && !depositTouched) {
-      const defaultAmount = quote.deposit_amount > 0 ? quote.deposit_amount : quote.total_amount;
-      setDepositInput(defaultAmount);
+    if (quote && (!depositTouched || depositInput == null)) {
+      setDepositInput(getEffectiveDepositMin(quote));
     }
-  }, [quote?.deposit_amount, quote?.total_amount, depositTouched]);
+  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, depositInput]);
 
   // reset touched and deposit when cart changes (handled via store reset)
   useEffect(() => {
     setDepositTouched(false);
   }, [cart.length]);
 
-  const depositMin = quote?.deposit_amount ?? 0;
+  const depositMin = quote ? getEffectiveDepositMin(quote) : 0;
   const depositMax = quote?.total_amount ?? undefined;
-  const rawDepositValue = depositInput ?? quote?.deposit_amount ?? 0;
   const depositError =
     quote && depositInput !== null && depositInput < depositMin
       ? `Deposit must be at least ${formatCurrency(depositMin)}`
@@ -212,24 +220,36 @@ export default function CartPanel({
         return;
       }
       setActionError("");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // viewport reset is handled post-transition by the page's currentStep effect
       nextStep();
       return;
     }
     if (currentStep === 2) {
       if (!allConfigured) {
-        const un = cart.filter((i) => !i.scheduled_at).map((i) => i.service_name);
-        const msg = un.length ? `Schedule: ${un.join(", ")}` : "Please schedule all services";
-        showToast("error", "Schedule required", msg);
-        setActionError(msg);
-        const el = document.getElementById("step2-configure");
-        if (el) {
-          const y = el.getBoundingClientRect().top + window.scrollY - 80;
-          const lenis = (
-            window as unknown as { lenis?: { scrollTo: (t: number) => void } }
-          ).lenis;
-          if (lenis?.scrollTo) lenis.scrollTo(y);
-          else window.scrollTo({ top: y, behavior: "smooth" });
+        // Continue acts as the wizard's Next button: step one service
+        // forward in order until the last service, then jump to whatever
+        // is still unscheduled — never just block with an error.
+        const from = configuringItemIndex ?? 0;
+        setActionError("");
+        if (from < cart.length - 1) {
+          const target = cart[from + 1];
+          requestNextService();
+          showToast(
+            "info",
+            "Next service",
+            `${target.service_name} — pick a professional and time`,
+          );
+        } else {
+          const un = cart.filter((i) => !i.scheduled_at);
+          const nextName = un[0]?.service_name ?? "service";
+          requestFocusNextUnscheduled();
+          showToast(
+            "info",
+            "Continue scheduling",
+            un.length > 1
+              ? `Next up: ${nextName} (+${un.length - 1} more)`
+              : `Next up: ${nextName} — pick a time to continue`,
+          );
         }
         return;
       }
@@ -238,7 +258,7 @@ export default function CartPanel({
         setAuthGateOpen(true);
         return;
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // viewport reset is handled post-transition by the page's currentStep effect
       nextStep();
       return;
     }
@@ -393,6 +413,17 @@ export default function CartPanel({
                 <h2 className='font-plus-jakarta-sans text-[13px] leading-[1.15] tracking-wide text-[#483630]'>
                   Dulux paints Admiralty-Lekki, Fola Osibo Road, Lagos, Nigeria
                 </h2>
+              </div>
+
+              <div className='flex items-center gap-2'>
+                <FiInstagram size={20} className='shrink-0 text-[#a78a6f]' />
+                <a
+                  href={BUSINESS.instagram}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='font-plus-jakarta-sans text-[13px] font-medium tracking-wide text-[#a57865] underline underline-offset-2 hover:text-[#8e6655]'>
+                  {BUSINESS.instagramHandle}
+                </a>
               </div>
             </div>
           </div>
@@ -665,7 +696,7 @@ export default function CartPanel({
                       Min Deposit
                     </span>
                     <span className='font-sans text-sm font-semibold text-[#a57865]'>
-                      {formatCurrency(Number(quote.deposit_amount))}
+                      {formatCurrency(depositMin)}
                     </span>
                   </div>
                 </div>
@@ -683,7 +714,7 @@ export default function CartPanel({
                       setDepositTouched(true);
                     }}
                     onBlur={() => setDepositTouched(true)}
-                    placeholder={String(quote.deposit_amount)}
+                    placeholder={String(depositMin)}
                     prefix='₦'
                     className={cn(
                       "w-full rounded-xl border bg-white px-3 py-2.5 font-sans text-base! text-[#483630] outline-none! placeholder:text-[#b89a85]/60 ring-0! h-auto shadow-none",
@@ -695,7 +726,7 @@ export default function CartPanel({
                   />
                   <p className='mt-1.5 font-sans text-[11px] text-[#8a6a5a]'>
                     Minimum deposit:{" "}
-                    {formatCurrency(Number(quote.deposit_amount))} • Total:{" "}
+                    {formatCurrency(depositMin)} • Total:{" "}
                     {formatCurrency(Number(quote.total_amount))}
                   </p>
                   {/* {depositError && depositTouched ? (
@@ -749,7 +780,7 @@ export default function CartPanel({
                 Continue
                 <img
                   src='/icons/right-arrow.svg'
-                  alt=''
+                  alt='Continue to the next booking step'
                   className='size-4 invert'
                 />
               </button>
@@ -769,7 +800,7 @@ export default function CartPanel({
                 Continue
                 <img
                   src='/icons/right-arrow.svg'
-                  alt=''
+                  alt='Continue to the next booking step'
                   className='size-4 invert'
                 />
               </button>
@@ -842,7 +873,7 @@ export default function CartPanel({
         onGuestContinue={() => {
           setAuthGateOpen(false);
           setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            // step transition scrolls via the page's currentStep effect
             nextStep();
           }, 250);
         }}

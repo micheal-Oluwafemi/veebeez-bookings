@@ -43,6 +43,12 @@ export function BeautySalonJsonLd() {
     openingHoursSpecification: BUSINESS.openingHoursSpecification,
     openingHours: BUSINESS.openingHours,
     areaServed: BUSINESS.areaServed,
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: BUSINESS.rating.value,
+      bestRating: BUSINESS.rating.bestRating,
+      reviewCount: BUSINESS.rating.reviewCount,
+    },
     sameAs: BUSINESS.sameAs,
     knowsAbout: [...BUSINESS.knowsAbout],
   };

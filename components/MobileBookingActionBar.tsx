@@ -22,6 +22,11 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { getStylistsQueryOptions } from "@/services/booking-catalog-requests";
+import {
+  requestFocusNextUnscheduled,
+  requestNextService,
+} from "@/lib/booking/schedule-focus";
+import { getEffectiveDepositMin } from "@/lib/booking/deposit";
 import type { Stylist } from "@/types/booking";
 
 interface MobileBookingActionBarProps {
@@ -39,6 +44,9 @@ export default function MobileBookingActionBar({
   // Don't show until a service is selected — hide when cart empty (per request)
   const effectiveVisible = visible && cart.length > 0;
   const currentStep = useBookingStore((state) => state.currentStep);
+  const configuringItemIndex = useBookingStore(
+    (state) => state.configuringItemIndex,
+  );
   const allConfigured = cart.length > 0 && cart.every((i) => i.scheduled_at !== null);
   const hasStylistSelection = allConfigured; // compat alias for legacy checks
   const totals = computeCartTotals(cart);
@@ -91,9 +99,11 @@ export default function MobileBookingActionBar({
     }
     return `${cart.length} professionals`;
   })();
+  // deposit_amount: 0 means no partial deposit — full payment is the minimum
+  const effectiveDepositMin = quote ? getEffectiveDepositMin(quote) : 0;
   const depositError =
-    quote && depositInput !== null && depositInput < quote.deposit_amount
-      ? `Deposit must be at least ${formatCurrency(quote.deposit_amount)}`
+    quote && depositInput !== null && depositInput < effectiveDepositMin
+      ? `Deposit must be at least ${formatCurrency(effectiveDepositMin)}`
       : quote &&
           depositInput !== null &&
           quote.total_amount !== undefined &&
@@ -101,13 +111,14 @@ export default function MobileBookingActionBar({
         ? `Deposit cannot exceed ${formatCurrency(quote.total_amount)}`
         : "";
 
-  // sync deposit input default — when deposit is 0, default to full total
+  // sync deposit input default — and refill it whenever a recalculation
+  // leaves it empty (deposit_amount: 0 means full payment is the minimum,
+  // so an empty field with a quoted minimum is never valid)
   useEffect(() => {
-    if (quote && !depositTouched) {
-      const defaultAmount = quote.deposit_amount > 0 ? quote.deposit_amount : quote.total_amount;
-      setDepositInput(defaultAmount);
+    if (quote && (!depositTouched || depositInput == null)) {
+      setDepositInput(getEffectiveDepositMin(quote));
     }
-  }, [quote?.deposit_amount, quote?.total_amount, depositTouched]);
+  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, depositInput]);
 
   useEffect(() => {
     if (cart.length > 0) setError("");
@@ -194,18 +205,30 @@ export default function MobileBookingActionBar({
     }
     if (currentStep === 2) {
       if (!allConfigured) {
-        const un = cart.filter((i) => !i.scheduled_at).map((i) => i.service_name);
-        const msg = un.length ? `Schedule: ${un.join(", ")}` : "Please schedule all services";
-        showToast("error", "Schedule required", msg);
-        setError(msg);
-        const el = document.getElementById("step2-configure");
-        if (el) {
-          const y = el.getBoundingClientRect().top + window.scrollY - 80;
-          const lenis = (
-            window as unknown as { lenis?: { scrollTo: (t: number) => void } }
-          ).lenis;
-          if (lenis?.scrollTo) lenis.scrollTo(y);
-          else window.scrollTo({ top: y, behavior: "smooth" });
+        // Continue acts as the wizard's Next button: step one service
+        // forward in order until the last service, then jump to whatever
+        // is still unscheduled — never just block with an error.
+        const from = configuringItemIndex ?? 0;
+        setError("");
+        if (from < cart.length - 1) {
+          const target = cart[from + 1];
+          requestNextService();
+          showToast(
+            "info",
+            "Next service",
+            `${target.service_name} — pick a professional and time`,
+          );
+        } else {
+          const un = cart.filter((i) => !i.scheduled_at);
+          const nextName = un[0]?.service_name ?? "service";
+          requestFocusNextUnscheduled();
+          showToast(
+            "info",
+            "Continue scheduling",
+            un.length > 1
+              ? `Next up: ${nextName} (+${un.length - 1} more)`
+              : `Next up: ${nextName} — pick a time to continue`,
+          );
         }
         return;
       }
@@ -339,7 +362,7 @@ export default function MobileBookingActionBar({
                 Continue
                 <img
                   src='/icons/right-arrow.svg'
-                  alt='arrow'
+                  alt='Continue to the next booking step'
                   className='invert size-4'
                 />
               </button>
@@ -521,7 +544,7 @@ export default function MobileBookingActionBar({
                         Min Deposit
                       </span>
                       <span className='font-plus-jakarta-sans text-sm font-semibold text-[#a57865]'>
-                        {formatCurrency(Number(quote.deposit_amount))}
+                        {formatCurrency(effectiveDepositMin)}
                       </span>
                     </div>
                   </div>
@@ -536,7 +559,7 @@ export default function MobileBookingActionBar({
                         setDepositTouched(true);
                       }}
                       onBlur={() => setDepositTouched(true)}
-                      placeholder={String(quote.deposit_amount)}
+                      placeholder={String(effectiveDepositMin)}
                       prefix='₦'
                       className={cn(
                         "w-full rounded-xl border bg-white px-3 py-2.5 font-sans text-base! text-[#483630] outline-none! placeholder:text-[#b89a85]/60 h-auto shadow-none",
@@ -548,7 +571,7 @@ export default function MobileBookingActionBar({
                     />
                     <p className='mt-1.5 font-sans text-[11px] text-[#8a6a5a]'>
                       Minimum deposit:{" "}
-                      {formatCurrency(Number(quote.deposit_amount))} • Total:{" "}
+                      {formatCurrency(effectiveDepositMin)} • Total:{" "}
                       {formatCurrency(Number(quote.total_amount))}
                     </p>
                     {depositError && depositTouched ? (
@@ -571,7 +594,7 @@ export default function MobileBookingActionBar({
                 {formatCurrency(
                   Number(
                     quote
-                      ? (depositInput ?? quote.deposit_amount)
+                      ? (depositInput ?? effectiveDepositMin)
                       : displayTotal,
                   ),
                 )}
@@ -583,7 +606,7 @@ export default function MobileBookingActionBar({
                 {quote
                   ? formatCurrency(
                       Number(quote.total_amount) -
-                        Number(depositInput ?? quote.deposit_amount ?? 0),
+                        Number(depositInput ?? effectiveDepositMin ?? 0),
                     )
                   : "-"}{" "}
               </b>
@@ -617,7 +640,7 @@ export default function MobileBookingActionBar({
         onGuestContinue={() => {
           setAuthGateOpen(false);
           setTimeout(() => {
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            // step transition scrolls via the page's currentStep effect
             nextStep();
           }, 250);
         }}

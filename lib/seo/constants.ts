@@ -54,7 +54,13 @@ export const BUSINESS = {
   telephoneIntl: "+2348068942333",
   // WhatsApp link used in booking-confirmation
   whatsapp: "https://wa.me/2348068942333",
+  // Instagram profile — linked from navbar, booking sidebar and sameAs
+  instagram: "https://www.instagram.com/veebeezofficial",
+  instagramHandle: "@veebeezofficial",
   priceRange: "₦₦",
+  // Aggregate rating surfaced in BeautySalon JSON-LD — update reviewCount
+  // as new Google/Instagram reviews come in.
+  rating: { value: "4.5", bestRating: "5", reviewCount: 100 },
   currenciesAccepted: "NGN",
   paymentAccepted: "Bank transfer, Card — no cash",
   url: SITE_URL,
@@ -69,6 +75,7 @@ export const BUSINESS = {
   },
   sameAs: [
     "https://www.google.com/maps/place/VALERIES+HQ+(VEEBEEZ+SALON)/@6.4424075,3.4650857,17z",
+    "https://www.instagram.com/veebeezofficial",
   ],
   areaServed: {
     "@type": "City",

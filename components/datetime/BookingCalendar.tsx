@@ -11,6 +11,7 @@ import {
   isSameDate,
 } from "@/lib/booking/calendar";
 import { getCalendarQueryOptions } from "@/services/booking-calendar-requests";
+import { scrollToElementId } from "@/lib/booking/schedule-focus";
 import { useBookingStore } from "@/store/useBookingStore";
 import type { CalendarDay } from "@/types/booking";
 
@@ -81,6 +82,10 @@ export default function BookingCalendar(props: BookingCalendarProps = {}) {
     }
     // always keep legacy global in sync (TimeSlotGrid reads it for availability date)
     storeSetDate(date);
+    // a date was just picked — bring the time slots into view once
+    // availability has had a moment to load (no-op where no time grid exists,
+    // e.g. the reschedule dialog which renders its own slots)
+    window.setTimeout(() => scrollToElementId("timeslot-grid", 96), 350);
   };
   // per-item stylist scoping for calendar day-disabling (no service_id, per Phase 2 spec)
   const selectedStylistId =

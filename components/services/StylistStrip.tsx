@@ -12,6 +12,7 @@ import { getStylistsQueryOptions } from "@/services/booking-catalog-requests";
 import { useBookingStore } from "@/store/useBookingStore";
 import type { Stylist } from "@/types/booking";
 import { getOptimizedImageUrl, shouldUnoptimize } from "@/lib/image";
+import { scrollToElementId } from "@/lib/booking/schedule-focus";
 import { RxShuffle } from "react-icons/rx";
 
 export default function StylistStrip() {
@@ -36,6 +37,12 @@ export default function StylistStrip() {
     } else {
       legacySetStylistId(id);
     }
+  };
+  // picking a stylist advances the flow — reveal the date picker below
+  // (no-op wherever the schedule anchors don't exist)
+  const selectStylistAndReveal = (id: number | null) => {
+    setStylistId(id);
+    window.setTimeout(() => scrollToElementId("schedule-date", 80), 180);
   };
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -119,7 +126,7 @@ export default function StylistStrip() {
             })()}
             <NoPreferenceCard
               selectedStylistId={selectedStylistId}
-              setStylistId={setStylistId}
+              setStylistId={selectStylistAndReveal}
               mounted={mounted}
               index={0}
             />
@@ -140,19 +147,7 @@ export default function StylistStrip() {
                 <button
                   key={stylist.slug}
                   type='button'
-                  onClick={() => {
-                    setTimeout(() => {
-                      const el = document.getElementById(
-                        "category-service-grid",
-                      );
-                      if (el)
-                        window.scrollTo({
-                          top: window.scrollY,
-                          behavior: "smooth",
-                        });
-                    }, 100);
-                    setStylistId(stylist.stylist_id);
-                  }}
+                  onClick={() => selectStylistAndReveal(stylist.stylist_id)}
                   className={cn(
                     buttonBaseClasses,
                     variantClasses,

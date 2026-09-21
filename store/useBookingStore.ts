@@ -46,6 +46,8 @@ interface BookingState {
   clearCart: () => void;
   setDate: (date: Date) => void;
   setTimeSlot: (slot: TimeSlot) => void;
+  /** Clear the pending date/time shims without touching the cart (wizard service-switch reset). */
+  clearPendingDateTime: () => void;
   setGuestDetails: (details: Partial<GuestDetails>) => void;
   setDepositInput: (value: number | null) => void;
   confirmBooking: () => boolean;
@@ -192,17 +194,13 @@ export const useBookingStore = create<BookingState>()(
       setCollectionSlug: (slug) => {
         const { selectedCollectionSlug } = get();
         if (selectedCollectionSlug === slug) return;
+        // Switching collections only changes what is being browsed —
+        // the cart (and any per-service scheduling) is intentionally kept
+        // so users can mix services from multiple collections.
         set({
           selectedCollectionSlug: slug,
-          cart: [],
-          configuringItemIndex: null,
           confirmation: null,
           currentStep: 1,
-          // clear deprecated globals to avoid stale cross-contamination
-          selectedStylistId: null,
-          hasStylistSelection: false,
-          selectedDate: null,
-          selectedTimeSlot: null,
         });
       },
 
@@ -210,16 +208,11 @@ export const useBookingStore = create<BookingState>()(
         const slug = typeof slugOrCollection === "string" ? slugOrCollection : slugOrCollection.slug;
         const { selectedCollectionSlug } = get();
         if (selectedCollectionSlug === slug) return;
+        // Same as setCollectionSlug: browsing context only, cart is kept.
         set({
           selectedCollectionSlug: slug,
-          cart: [],
-          configuringItemIndex: null,
           confirmation: null,
           currentStep: 1,
-          selectedStylistId: null,
-          hasStylistSelection: false,
-          selectedDate: null,
-          selectedTimeSlot: null,
         });
       },
 
@@ -404,6 +397,10 @@ export const useBookingStore = create<BookingState>()(
           get().updateCartItemSchedule(svc.service_id, { scheduled_at: null });
           set({ selectedTimeSlot: slot });
         }
+      },
+
+      clearPendingDateTime: () => {
+        set({ selectedDate: null, selectedTimeSlot: null });
       },
 
       setGuestDetails: (details) => {

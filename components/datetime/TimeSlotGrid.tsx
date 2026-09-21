@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@/components/ui/error-state";
 import { formatTime } from "@/lib/booking/format";
+import { scrollToElementId } from "@/lib/booking/schedule-focus";
 import { getAvailabilityQueryOptions } from "@/services/booking-availability-requests";
 import { useBookingStore } from "@/store/useBookingStore";
 import type { TimeSlot } from "@/types/booking";
@@ -71,6 +72,27 @@ export default function TimeSlotGrid() {
     });
   }, [selectedDate, hasStylistSelection, availability]);
 
+  // Reveal the times once they're ready for a newly picked date. The
+  // fixed-delay scroll in BookingCalendar fires while availability may
+  // still be loading (landing mid-layout or nowhere); this guarantees the
+  // scroll happens after the slots actually paint. Mount-guarded so
+  // revisiting an already-scheduled service doesn't yank the page down.
+  const revealedForDateRef = useRef<string | null | undefined>(undefined);
+  useEffect(() => {
+    if (revealedForDateRef.current === undefined) {
+      revealedForDateRef.current = dateStr;
+      return;
+    }
+    if (!dateStr) {
+      revealedForDateRef.current = null;
+      return;
+    }
+    if (slots.length > 0 && revealedForDateRef.current !== dateStr) {
+      revealedForDateRef.current = dateStr;
+      scrollToElementId("timeslot-grid", 96);
+    }
+  }, [dateStr, slots.length]);
+
   const selectedTimeSlot = (() => {
     if (configuringItem?.scheduled_at) {
       const tp = configuringItem.scheduled_at.split(" ")[1]?.slice(0, 5) ?? "";
@@ -88,7 +110,7 @@ export default function TimeSlotGrid() {
   };
 
   return (
-    <div>
+    <div id='timeslot-grid' className='scroll-mt-24'>
       <div className='mb-3 font-plus-jakarta-sans text-lg tracking-tight font-medium text-[#483630]'>
         Pick a time
       </div>
