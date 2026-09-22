@@ -795,6 +795,8 @@ export default function MyBookingsPage() {
               collection_id: ctx.collectionId,
               collection_name: ctx.collectionName,
               answers,
+              stylist_id: null,
+              scheduled_at: null,
             } as import("@/types/booking").CartLineItem;
           }
         }),

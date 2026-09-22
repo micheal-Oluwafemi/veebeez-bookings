@@ -65,8 +65,8 @@ export default function CartPanel({
   const cart = useBookingStore((s) => s.cart);
   const totals = computeCartTotals(cart);
   // per-item scheduling (Phase 3) — replaces global stylist/date/time
-  const allConfigured = cart.length > 0 && cart.every((i) => i.scheduled_at !== null);
-  const configuredCount = cart.filter((i) => i.scheduled_at !== null).length;
+  const allConfigured = cart.length > 0 && cart.every((i) => !!i.scheduled_at);
+  const configuredCount = cart.filter((i) => !!i.scheduled_at).length;
   // compat aliases for legacy UI helpers (will be removed after verification)
   const hasStylistSelection = allConfigured;
   const selectedStylistId = cart[0]?.stylist_id ?? null;
@@ -145,14 +145,23 @@ export default function CartPanel({
     if (cart.length > 0) setActionError("");
   }, [cart.length, allConfigured]);
 
-  // sync deposit input default — and refill it whenever a recalculation
-  // leaves it empty (deposit_amount: 0 means full payment is the minimum,
-  // so an empty field with a quoted minimum is never valid)
+  // sync deposit input default — and refill it only when a recalculated
+  // quote arrives while the field is empty (deposit_amount: 0 means full
+  // payment is the minimum). Must NOT react to depositInput itself, or
+  // clearing the field to type a new amount would instantly snap back.
+  const depositQuoteKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (quote && (!depositTouched || depositInput == null)) {
+    if (!quote) return;
+    const key = `${quote.deposit_amount}:${quote.total_amount}`;
+    const recalculated =
+      depositQuoteKeyRef.current !== null &&
+      depositQuoteKeyRef.current !== key;
+    depositQuoteKeyRef.current = key;
+    const isEmpty = useBookingStore.getState().depositInput == null;
+    if (!depositTouched || (recalculated && isEmpty)) {
       setDepositInput(getEffectiveDepositMin(quote));
     }
-  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, depositInput]);
+  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, setDepositInput, quote]);
 
   // reset touched and deposit when cart changes (handled via store reset)
   useEffect(() => {
@@ -161,8 +170,14 @@ export default function CartPanel({
 
   const depositMin = quote ? getEffectiveDepositMin(quote) : 0;
   const depositMax = quote?.total_amount ?? undefined;
+  // Only editable once every service is scheduled AND the user has moved
+  // past the services-picking step (step 1). While still choosing services
+  // the field stays locked.
+  const canEditDeposit = allConfigured && currentStep > 1;
+  // An empty deposit is invalid too — otherwise a cleared field could slip
+  // past the "at least the minimum" check
   const depositError =
-    quote && depositInput !== null && depositInput < depositMin
+    quote && (depositInput == null || depositInput < depositMin)
       ? `Deposit must be at least ${formatCurrency(depositMin)}`
       : quote &&
           depositInput !== null &&
@@ -701,40 +716,49 @@ export default function CartPanel({
                   </div>
                 </div>
 
-                <Divider />
+                {currentStep === 3 ? (
+                  <>
+                    <Divider />
 
-                <div>
-                  <label className='mb-1.5 block font-plus-jakarta-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#483630]'>
-                    Deposit Amount <span className='text-[#9f2d20]'>*</span>
-                  </label>
-                  <PriceInput
-                    value={depositInput}
-                    onValueChange={(val) => {
-                      setDepositInput(val);
-                      setDepositTouched(true);
-                    }}
-                    onBlur={() => setDepositTouched(true)}
-                    placeholder={String(depositMin)}
-                    prefix='₦'
-                    className={cn(
-                      "w-full rounded-xl border bg-white px-3 py-2.5 font-sans text-base! text-[#483630] outline-none! placeholder:text-[#b89a85]/60 ring-0! h-auto shadow-none",
-                      depositError && depositTouched
-                        ? "border-[#9f2d20]"
-                        : "border-[#e8ddd0]",
-                    )}
-                    aria-invalid={!!(depositError && depositTouched)}
-                  />
-                  <p className='mt-1.5 font-sans text-[11px] text-[#8a6a5a]'>
-                    Minimum deposit:{" "}
-                    {formatCurrency(depositMin)} • Total:{" "}
-                    {formatCurrency(Number(quote.total_amount))}
-                  </p>
-                  {/* {depositError && depositTouched ? (
-                    <p className='mt-1.5 font-plus-jakarta-sans text-xs font-medium text-[#9f2d20]'>
-                      {depositError}
-                    </p>
-                  ) : null} */}
-                </div>
+                    <div>
+                      <label className='mb-1.5 block font-plus-jakarta-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#483630]'>
+                        Deposit Amount <span className='text-[#9f2d20]'>*</span>
+                      </label>
+                      <PriceInput
+                        value={depositInput}
+                        disabled={!canEditDeposit}
+                        onValueChange={(val) => {
+                          if (!canEditDeposit) return;
+                          setDepositInput(val);
+                          setDepositTouched(true);
+                        }}
+                        onBlur={() => {
+                          if (!canEditDeposit) return;
+                          setDepositTouched(true);
+                        }}
+                        placeholder={String(depositMin)}
+                        prefix='₦'
+                        className={cn(
+                          "w-full rounded-xl border bg-white px-3 py-2.5 font-sans text-base! text-[#483630] outline-none! placeholder:text-[#b89a85]/60 ring-0! h-auto shadow-none disabled:cursor-not-allowed disabled:bg-[#f3ece3]/60 disabled:text-[#8a6a5a]",
+                          depositError && depositTouched
+                            ? "border-[#9f2d20]"
+                            : "border-[#e8ddd0]",
+                        )}
+                        aria-invalid={!!(depositError && depositTouched)}
+                      />
+                      <p className='mt-1.5 font-sans text-[11px] text-[#8a6a5a]'>
+                        Minimum deposit:{" "}
+                        {formatCurrency(depositMin)} • Total:{" "}
+                        {formatCurrency(Number(quote.total_amount))}
+                      </p>
+                      {depositError && depositTouched ? (
+                        <p className='mt-1 font-plus-jakarta-sans text-[11px] font-medium text-[#9f2d20]'>
+                          {depositError}
+                        </p>
+                      ) : null}
+                    </div>
+                  </>
+                ) : null}
               </>
             ) : null}
           </div>

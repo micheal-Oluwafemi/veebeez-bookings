@@ -217,7 +217,9 @@ export interface CartLineItem {
 }
 
 export function isItemConfigured(item: CartLineItem): boolean {
-  return item.scheduled_at !== null;
+  // Loose truthiness so a missing/undefined scheduled_at (e.g. from a
+  // malformed rebook payload) is treated as unscheduled, never configured.
+  return !!item.scheduled_at;
 }
 
 export interface BookingPayload {

@@ -241,7 +241,12 @@ export default function page() {
         throw new Error("Quote not available. Please select services again.");
       // deposit_amount: 0 means no partial deposit — full payment is the minimum
       const depositMin = getEffectiveDepositMin(quote);
-      const amountToPay = depositInput ?? depositMin;
+      if (depositInput == null) {
+        throw new Error(
+          `Enter a deposit of at least ₦${depositMin.toLocaleString("en-NG")}`,
+        );
+      }
+      const amountToPay = depositInput;
       if (amountToPay < depositMin) {
         throw new Error(
           `Deposit must be at least ₦${depositMin.toLocaleString("en-NG")}`,

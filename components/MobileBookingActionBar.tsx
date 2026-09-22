@@ -47,7 +47,7 @@ export default function MobileBookingActionBar({
   const configuringItemIndex = useBookingStore(
     (state) => state.configuringItemIndex,
   );
-  const allConfigured = cart.length > 0 && cart.every((i) => i.scheduled_at !== null);
+  const allConfigured = cart.length > 0 && cart.every((i) => !!i.scheduled_at);
   const hasStylistSelection = allConfigured; // compat alias for legacy checks
   const totals = computeCartTotals(cart);
   const {
@@ -99,10 +99,11 @@ export default function MobileBookingActionBar({
     }
     return `${cart.length} professionals`;
   })();
-  // deposit_amount: 0 means no partial deposit — full payment is the minimum
+  // deposit_amount: 0 means no partial deposit — full payment is the minimum.
+  // An empty field is invalid too, so it can't slip past the minimum check.
   const effectiveDepositMin = quote ? getEffectiveDepositMin(quote) : 0;
   const depositError =
-    quote && depositInput !== null && depositInput < effectiveDepositMin
+    quote && (depositInput == null || depositInput < effectiveDepositMin)
       ? `Deposit must be at least ${formatCurrency(effectiveDepositMin)}`
       : quote &&
           depositInput !== null &&
@@ -111,14 +112,27 @@ export default function MobileBookingActionBar({
         ? `Deposit cannot exceed ${formatCurrency(quote.total_amount)}`
         : "";
 
-  // sync deposit input default — and refill it whenever a recalculation
-  // leaves it empty (deposit_amount: 0 means full payment is the minimum,
-  // so an empty field with a quoted minimum is never valid)
+  // Only editable once every service is scheduled AND the user has moved
+  // past the services-picking step (step 1).
+  const canEditDeposit = allConfigured && currentStep > 1;
+
+  // sync deposit input default — and refill it only when a recalculated
+  // quote arrives while the field is empty (deposit_amount: 0 means full
+  // payment is the minimum). Must NOT react to depositInput itself, or
+  // clearing the field to type a new amount would instantly snap back.
+  const depositQuoteKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    if (quote && (!depositTouched || depositInput == null)) {
+    if (!quote) return;
+    const key = `${quote.deposit_amount}:${quote.total_amount}`;
+    const recalculated =
+      depositQuoteKeyRef.current !== null &&
+      depositQuoteKeyRef.current !== key;
+    depositQuoteKeyRef.current = key;
+    const isEmpty = useBookingStore.getState().depositInput == null;
+    if (!depositTouched || (recalculated && isEmpty)) {
       setDepositInput(getEffectiveDepositMin(quote));
     }
-  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, depositInput]);
+  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, setDepositInput, quote]);
 
   useEffect(() => {
     if (cart.length > 0) setError("");
@@ -344,8 +358,8 @@ export default function MobileBookingActionBar({
               <button
                 type='button'
                 onClick={handleContinue}
-                disabled={isConfirming || isQuoteLoading}
-                className='inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#a57865] px-6 py-3 font-plus-jakarta-sans text-sm font-semibold text-white transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-[#8e6655] active:scale-[0.97] disabled:opacity-70'>
+                disabled={isConfirming || isQuoteLoading || !!depositError || !quote}
+                className='inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#a57865] px-6 py-3 font-plus-jakarta-sans text-sm font-semibold text-white transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-[#8e6655] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50'>
                 {isConfirming ? (
                   <>
                     <Loader2 size={16} className='animate-spin' /> Booking...
@@ -372,7 +386,15 @@ export default function MobileBookingActionBar({
       </motion.div>
 
       {/* Review Drawer – mobile only, shows quote summary before payment */}
-      <Drawer open={reviewOpen} onOpenChange={setReviewOpen}>
+      <Drawer
+        open={reviewOpen}
+        onOpenChange={(open) => {
+          // The Confirm & Pay bar is disabled while the deposit is invalid
+          // and this drawer is the only place to edit it — so keep the user
+          // here until the amount is valid instead of locking them out.
+          if (!open && depositError && depositTouched) return;
+          setReviewOpen(open);
+        }}>
         <DrawerContent
           aria-describedby={undefined}
           className='p-0 bg-white! rounded-t-[28px]! max-h-[80vh] overflow-hidden flex flex-col md:hidden'>
@@ -389,9 +411,18 @@ export default function MobileBookingActionBar({
             </div>
             <button
               type='button'
-              onClick={() => setReviewOpen(false)}
+              onClick={() => {
+                if (depositError && depositTouched) return;
+                setReviewOpen(false);
+              }}
+              disabled={!!(depositError && depositTouched)}
               aria-label='Close review'
-              className='flex size-8 items-center justify-center rounded-full border border-[#e8ddd0] bg-white text-[#483630]'>
+              title={
+                depositError && depositTouched
+                  ? depositError
+                  : "Close review"
+              }
+              className='flex size-8 items-center justify-center rounded-full border border-[#e8ddd0] bg-white text-[#483630] disabled:cursor-not-allowed disabled:opacity-40'>
               <X size={14} />
             </button>
           </div>
@@ -554,15 +585,21 @@ export default function MobileBookingActionBar({
                     </label>
                     <PriceInput
                       value={depositInput}
+                      disabled={!canEditDeposit}
+                      readOnly={!canEditDeposit}
                       onValueChange={(val) => {
+                        if (!canEditDeposit) return;
                         setDepositInput(val);
                         setDepositTouched(true);
                       }}
-                      onBlur={() => setDepositTouched(true)}
+                      onBlur={() => {
+                        if (!canEditDeposit) return;
+                        setDepositTouched(true);
+                      }}
                       placeholder={String(effectiveDepositMin)}
                       prefix='₦'
                       className={cn(
-                        "w-full rounded-xl border bg-white px-3 py-2.5 font-sans text-base! text-[#483630] outline-none! placeholder:text-[#b89a85]/60 h-auto shadow-none",
+                        "w-full rounded-xl border bg-white px-3 py-2.5 font-sans text-base! text-[#483630] outline-none! placeholder:text-[#b89a85]/60 h-auto shadow-none disabled:cursor-not-allowed disabled:bg-[#f3ece3]/60 disabled:text-[#8a6a5a]",
                         depositError && depositTouched
                           ? "border-[#9f2d20]"
                           : "border-[#e8ddd0]",
@@ -574,7 +611,11 @@ export default function MobileBookingActionBar({
                       {formatCurrency(effectiveDepositMin)} • Total:{" "}
                       {formatCurrency(Number(quote.total_amount))}
                     </p>
-                    {depositError && depositTouched ? (
+                    {!canEditDeposit ? (
+                      <p className='mt-1.5 font-plus-jakarta-sans text-[11px] font-medium text-[#a06b12]'>
+                        Editable once every service is scheduled with a professional.
+                      </p>
+                    ) : depositError && depositTouched ? (
                       <p className='mt-1.5 font-plus-jakarta-sans text-xs font-medium text-[#9f2d20]'>
                         {depositError}
                       </p>
