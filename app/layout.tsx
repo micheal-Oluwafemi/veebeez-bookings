@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import ReactLenis from "lenis/react";
 import Providers from "./providers";
 import Navbar from "@/components/Navbar";
+import FeedbackFab from "@/components/feedback/FeedbackFab";
 import { BUSINESS, SITE_URL } from "@/lib/seo/constants";
 import {
   BeautySalonJsonLd,
@@ -127,6 +128,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <Providers>
             <Navbar />
             <main>{children}</main>
+            <FeedbackFab />
           </Providers>
         </ReactLenis>
       </body>
