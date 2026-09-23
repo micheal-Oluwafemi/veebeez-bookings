@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { ErrorState } from "@/components/ui/error-state";
 import { formatTime } from "@/lib/booking/format";
 import { scrollToElementId } from "@/lib/booking/schedule-focus";
@@ -109,59 +110,85 @@ export default function TimeSlotGrid() {
     }
   };
 
+  const isLoadingTimes =
+    hasStylistSelection && !!selectedDate && isAvailabilityFetching;
+
   return (
     <div id='timeslot-grid' className='scroll-mt-24'>
       <div className='mb-3 font-plus-jakarta-sans text-lg tracking-tight font-medium text-[#483630]'>
         Pick a time
       </div>
-      {!hasStylistSelection ? (
-        <p className='font-plus-jakarta-sans text-sm italic text-[#8a6a5a]'>
-          Select a professional first.
-        </p>
-      ) : !selectedDate ? (
-        <p className='font-plus-jakarta-sans text-sm italic text-[#8a6a5a]'>
-          Select a date to see available times.
-        </p>
-      ) : isAvailabilityError ? (
-        <ErrorState
-          variant='inline'
-          title='Times unavailable'
-          message="We couldn't load available times for this date. Please try again."
-          error={availabilityError}
-          onRetry={() => refetchAvailability()}
-          retryLabel={isAvailabilityFetching ? "Retrying..." : "Try again"}
-        />
-      ) : slots.length === 0 ? (
-        <div className='rounded-xl border border-dashed border-[#e8ddd0] bg-white px-4 py-8 text-center'>
-          <p className='font-plus-jakarta-sans text-sm font-medium text-[#483630]'>
-            No times available
+      <div className='relative' aria-busy={isLoadingTimes}>
+        {!hasStylistSelection ? (
+          <p className='font-plus-jakarta-sans text-sm italic text-[#8a6a5a]'>
+            Select a professional first.
           </p>
-          <p className='mt-1 font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
-            {serviceName
-              ? `No slots for ${serviceName} on this date — try another professional or date.`
-              : "Try another date — this day is fully booked or closed."}
+        ) : !selectedDate ? (
+          <p className='font-plus-jakarta-sans text-sm italic text-[#8a6a5a]'>
+            Select a date to see available times.
           </p>
-        </div>
-      ) : (
-        <div className='grid grid-cols-2 gap-2'>
-          {slots.map((slot) => {
-            const isSelected = selectedTimeSlot?.value === slot.value;
-            return (
-              <button
-                key={slot.value}
-                type='button'
-                onClick={() => handleSelectSlot(slot)}
-                className={`border px-3 py-3 text-center rounded-md font-plus-jakarta-sans text-sm transition-colors ${
-                  isSelected
-                    ? "border-[#a57865] bg-[#a57865] text-white"
-                    : "border-[#a57865]/15 text-[#483630] hover:border-[#a57865]/50 hover:text-[#a57865]"
-                }`}>
-                {slot.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        ) : isAvailabilityError ? (
+          <ErrorState
+            variant='inline'
+            title='Times unavailable'
+            message="We couldn't load available times for this date. Please try again."
+            error={availabilityError}
+            onRetry={() => refetchAvailability()}
+            retryLabel={isAvailabilityFetching ? "Retrying..." : "Try again"}
+          />
+        ) : slots.length > 0 ? (
+          <div className='grid grid-cols-2 gap-2'>
+            {slots.map((slot) => {
+              const isSelected = selectedTimeSlot?.value === slot.value;
+              return (
+                <button
+                  key={slot.value}
+                  type='button'
+                  onClick={() => handleSelectSlot(slot)}
+                  className={`border px-3 py-3 text-center rounded-md font-plus-jakarta-sans text-sm transition-colors ${
+                    isSelected
+                      ? "border-[#a57865] bg-[#a57865] text-white"
+                      : "border-[#a57865]/15 text-[#483630] hover:border-[#a57865]/50 hover:text-[#a57865]"
+                  }`}>
+                  {slot.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : isLoadingTimes ? (
+          <div className='grid grid-cols-2 gap-2'>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className='h-[46px] animate-pulse rounded-md bg-[#f3ece3]'
+              />
+            ))}
+          </div>
+        ) : (
+          <div className='rounded-xl border border-dashed border-[#e8ddd0] bg-white px-4 py-8 text-center'>
+            <p className='font-plus-jakarta-sans text-sm font-medium text-[#483630]'>
+              No times available
+            </p>
+            <p className='mt-1 font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
+              {serviceName
+                ? `No slots for ${serviceName} on this date — try another professional or date.`
+                : "Try another date — this day is fully booked or closed."}
+            </p>
+          </div>
+        )}
+
+        {/* Overlayed loading spinner while availability is being fetched */}
+        {isLoadingTimes ? (
+          <div className='absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/60 backdrop-blur-[1px]'>
+            <div className='flex items-center gap-2 rounded-full border border-[#e8ddd0] bg-white px-4 py-2 shadow-sm'>
+              <Loader2 size={16} className='animate-spin text-[#a57865]' />
+              <span className='font-plus-jakarta-sans text-xs font-medium text-[#483630]'>
+                Loading times…
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

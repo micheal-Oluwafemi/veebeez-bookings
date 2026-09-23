@@ -116,11 +116,12 @@ export default function MobileBookingActionBar({
   // past the services-picking step (step 1).
   const canEditDeposit = allConfigured && currentStep > 1;
 
-  // sync deposit input default — and refill it only when a recalculated
-  // quote arrives while the field is empty (deposit_amount: 0 means full
-  // payment is the minimum). Must NOT react to depositInput itself, or
-  // clearing the field to type a new amount would instantly snap back.
+  // Keep the deposit defaulted to the effective minimum. The store nulls
+  // depositInput whenever scheduling changes, so we also re-default on
+  // entering the confirm step — otherwise the field can appear blank there.
+  // Clearing the field to type never snaps back (touched → no refill).
   const depositQuoteKeyRef = useRef<string | null>(null);
+  const prevStepForDepositRef = useRef(currentStep);
   useEffect(() => {
     if (!quote) return;
     const key = `${quote.deposit_amount}:${quote.total_amount}`;
@@ -128,11 +129,26 @@ export default function MobileBookingActionBar({
       depositQuoteKeyRef.current !== null &&
       depositQuoteKeyRef.current !== key;
     depositQuoteKeyRef.current = key;
-    const isEmpty = useBookingStore.getState().depositInput == null;
-    if (!depositTouched || (recalculated && isEmpty)) {
+    const enteredConfirm =
+      prevStepForDepositRef.current !== currentStep && currentStep === 3;
+    prevStepForDepositRef.current = currentStep;
+    const isEmpty = depositInput == null;
+    if (
+      !depositTouched ||
+      (recalculated && isEmpty) ||
+      (enteredConfirm && isEmpty)
+    ) {
       setDepositInput(getEffectiveDepositMin(quote));
     }
-  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, setDepositInput, quote]);
+  }, [
+    quote,
+    quote?.deposit_amount,
+    quote?.total_amount,
+    currentStep,
+    depositTouched,
+    depositInput,
+    setDepositInput,
+  ]);
 
   useEffect(() => {
     if (cart.length > 0) setError("");

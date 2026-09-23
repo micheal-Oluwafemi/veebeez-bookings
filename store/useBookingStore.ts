@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
 import type { Booking, BookingStep, CartLineItem, GuestDetails, TimeSlot } from "@/types/booking";
 import { isItemConfigured } from "@/types/booking";
 
@@ -55,7 +54,7 @@ interface BookingState {
   resetBooking: () => void;
 }
 
-type PersistedBookingState = Pick<
+type InitialBookingState = Pick<
   BookingState,
   | "currentStep"
   | "selectedCollectionSlug"
@@ -75,8 +74,8 @@ const initialGuest: GuestDetails = {
   specialRequests: "",
 };
 
-const initialBookingState: PersistedBookingState & {
-  // deprecated fields live only in memory, not persisted from v7 onward
+const initialBookingState: InitialBookingState & {
+  // deprecated fields live only in memory
   selectedStylistId: number | null;
   hasStylistSelection: boolean;
   selectedDate: Date | null;
@@ -103,9 +102,7 @@ function combineScheduledAt(date: Date, slot: TimeSlot): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${slot.value}:00`;
 }
 
-export const useBookingStore = create<BookingState>()(
-  persist<BookingState, [], [], PersistedBookingState>(
-    (set, get) => ({
+export const useBookingStore = create<BookingState>()((set, get) => ({
       ...initialBookingState,
 
       setDepositInput: (value) => set({ depositInput: value }),
@@ -434,115 +431,4 @@ export const useBookingStore = create<BookingState>()(
           guestDetails: { ...initialGuest },
         });
       },
-    }),
-    {
-      name: "veebeez-booking",
-      version: 8,
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        currentStep: state.currentStep,
-        selectedCollectionSlug: state.selectedCollectionSlug,
-        cart: state.cart,
-        configuringItemIndex: state.configuringItemIndex,
-        guestDetails: state.guestDetails,
-        confirmation: state.confirmation,
-        depositInput: state.depositInput,
-      }),
-      migrate: (persistedState, version) => {
-        if (!persistedState || typeof persistedState !== "object" || version < 3) {
-          return initialBookingState as unknown as PersistedBookingState;
-        }
-        const state = persistedState as PersistedBookingState & Record<string, unknown>;
-        // v3->v4 step renumbering
-        if (version < 4) {
-          if ((state as unknown as { currentStep: number }).currentStep === 2)
-            (state as unknown as { currentStep: number }).currentStep = 3;
-          else if ((state as unknown as { currentStep: number }).currentStep === 3)
-            (state as unknown as { currentStep: number }).currentStep = 4;
-        }
-        if (version < 5) {
-          const gd = (state as unknown as { guestDetails?: GuestDetails }).guestDetails as unknown as Record<string, unknown> | undefined;
-          if (gd && !("whatsappNumber" in gd)) {
-            (state as Record<string, unknown>).guestDetails = {
-              ...initialGuest,
-              ...(gd as unknown as GuestDetails),
-              whatsappNumber: (gd.whatsappNumber as string | undefined) ?? (gd.phone as string | undefined) ?? "",
-            };
-          }
-        }
-        if (version < 6) {
-          if (!("depositInput" in (state as unknown as Record<string, unknown>))) {
-            (state as Record<string, unknown>).depositInput = null;
-          }
-        }
-        if (version < 7) {
-          // Drop global scheduling fields and add per-item scheduling
-          const oldCart = (state as unknown as { cart?: unknown[] }).cart ?? [];
-          const cart = (Array.isArray(oldCart) ? oldCart : []).map((raw: unknown) => {
-            const item = raw as Record<string, unknown>;
-            return {
-              ...item,
-              stylist_id: typeof item.stylist_id === "number" || item.stylist_id === null ? (item.stylist_id as number | null) : null,
-              scheduled_at: typeof item.scheduled_at === "string" ? (item.scheduled_at as string) : null,
-            } as CartLineItem;
-          });
-          (state as Record<string, unknown>).cart = cart;
-          if (!("configuringItemIndex" in (state as Record<string, unknown>))) {
-            (state as Record<string, unknown>).configuringItemIndex = null;
-          }
-          // purge legacy globals if present in persisted blob
-          delete (state as Record<string, unknown>).selectedStylistId;
-          delete (state as Record<string, unknown>).hasStylistSelection;
-          delete (state as Record<string, unknown>).selectedDate;
-          delete (state as Record<string, unknown>).selectedTimeSlot;
-        }
-        if (version < 8) {
-          // Phase 3: merged Professional+DateTime into single "Services & Schedule" step 2
-          // Old 4 steps (1 Services, 2 Professional, 3 Date&Time, 4 Details) → new 3 steps (1 Services, 2 Schedule, 3 Details)
-          const cs = (state as unknown as { currentStep: number }).currentStep;
-          if (cs === 4) (state as unknown as { currentStep: number }).currentStep = 3;
-          else if (cs === 3) (state as unknown as { currentStep: number }).currentStep = 2;
-          // cs 2 stays 2, cs 1 stays 1
-        }
-        return state as unknown as PersistedBookingState;
-      },
-      merge: (persistedState, currentState) => {
-        const persisted = persistedState as Partial<PersistedBookingState> & Record<string, unknown>;
-        if (!persisted || Object.keys(persisted).length === 0) {
-          return { ...currentState, ...initialBookingState };
-        }
-        // ensure cart items always have per-item scheduling fields (defensive for manually edited storage)
-        let cart = (persisted.cart ?? currentState.cart) as CartLineItem[];
-        if (Array.isArray(cart)) {
-          cart = cart.map((item: unknown) => {
-            const c = item as Record<string, unknown>;
-            return {
-              ...(c as object),
-              stylist_id: typeof c.stylist_id === "number" || c.stylist_id === null ? (c.stylist_id as number | null) : null,
-              scheduled_at: typeof c.scheduled_at === "string" ? (c.scheduled_at as string) : null,
-            } as CartLineItem;
-          });
-        }
-        return {
-          ...currentState,
-          ...persisted,
-          cart,
-          configuringItemIndex:
-            typeof persisted.configuringItemIndex === "number" || persisted.configuringItemIndex === null
-              ? (persisted.configuringItemIndex as number | null)
-              : null,
-          guestDetails: {
-            ...initialGuest,
-            ...persisted.guestDetails,
-          },
-          depositInput: persisted.depositInput ?? null,
-          // deprecated globals always reset to in-memory defaults; they are not persisted and are derived from cart
-          selectedStylistId: null,
-          hasStylistSelection: Array.isArray(cart) && cart.length > 0 ? cart.every(isItemConfigured) : false,
-          selectedDate: null,
-          selectedTimeSlot: null,
-        };
-      },
-    },
-  ),
-);
+}));

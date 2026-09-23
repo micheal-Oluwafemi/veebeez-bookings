@@ -145,11 +145,12 @@ export default function CartPanel({
     if (cart.length > 0) setActionError("");
   }, [cart.length, allConfigured]);
 
-  // sync deposit input default — and refill it only when a recalculated
-  // quote arrives while the field is empty (deposit_amount: 0 means full
-  // payment is the minimum). Must NOT react to depositInput itself, or
-  // clearing the field to type a new amount would instantly snap back.
+  // Keep the deposit defaulted to the effective minimum. The store nulls
+  // depositInput whenever scheduling changes, so we also re-default on
+  // entering the confirm step — otherwise the field can appear blank there.
+  // Clearing the field to type never snaps back (touched → no refill).
   const depositQuoteKeyRef = useRef<string | null>(null);
+  const prevStepForDepositRef = useRef(currentStep);
   useEffect(() => {
     if (!quote) return;
     const key = `${quote.deposit_amount}:${quote.total_amount}`;
@@ -157,11 +158,26 @@ export default function CartPanel({
       depositQuoteKeyRef.current !== null &&
       depositQuoteKeyRef.current !== key;
     depositQuoteKeyRef.current = key;
-    const isEmpty = useBookingStore.getState().depositInput == null;
-    if (!depositTouched || (recalculated && isEmpty)) {
+    const enteredConfirm =
+      prevStepForDepositRef.current !== currentStep && currentStep === 3;
+    prevStepForDepositRef.current = currentStep;
+    const isEmpty = depositInput == null;
+    if (
+      !depositTouched ||
+      (recalculated && isEmpty) ||
+      (enteredConfirm && isEmpty)
+    ) {
       setDepositInput(getEffectiveDepositMin(quote));
     }
-  }, [quote?.deposit_amount, quote?.total_amount, depositTouched, setDepositInput, quote]);
+  }, [
+    quote,
+    quote?.deposit_amount,
+    quote?.total_amount,
+    currentStep,
+    depositTouched,
+    depositInput,
+    setDepositInput,
+  ]);
 
   // reset touched and deposit when cart changes (handled via store reset)
   useEffect(() => {
@@ -368,6 +384,44 @@ export default function CartPanel({
   useEffect(() => {
     if (cart.length === 0) prevQuoteKeyRef.current = null;
   }, [cart.length]);
+
+  // Entering Confirm & Pay: bring the payment card's deposit input into
+  // view (the input only renders at step 3, at the bottom of the card).
+  const prevStepScrollRef = useRef(currentStep);
+  useEffect(() => {
+    const enteredConfirm =
+      prevStepScrollRef.current !== currentStep && currentStep === 3;
+    prevStepScrollRef.current = currentStep;
+    if (!enteredConfirm) return;
+
+    const scrollPaymentIntoView = () => {
+      const container = scrollContainerRef.current;
+      if (isPage || !container) {
+        const lenis = (
+          window as unknown as { lenis?: { scrollTo: (to: number) => void } }
+        ).lenis;
+        if (lenis?.scrollTo) lenis.scrollTo(document.body.scrollHeight);
+        else
+          window.scrollTo({
+            top: document.body.scrollHeight,
+            behavior: "smooth",
+          });
+        return;
+      }
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+    };
+
+    // double rAF so the step-3 deposit block is painted before measuring
+    const raf1 = requestAnimationFrame(() => {
+      requestAnimationFrame(scrollPaymentIntoView);
+    });
+    const timeoutId = window.setTimeout(scrollPaymentIntoView, 260);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      clearTimeout(timeoutId);
+    };
+  }, [currentStep, isPage]);
 
   return (
     <aside
