@@ -269,6 +269,13 @@ html.lenis body {
   }
 }
 
+/* SHEET ANIMATION */
+@keyframes sheet-in {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+}
+
 .t-skel {
   position: relative;
   display: grid;
@@ -315,6 +322,7 @@ html.lenis body {
 .t-skel-skeleton.is-pulsing > * {
   animation: veebeez-skel-pulse var(--skel-pulse-dur) ease-in-out 1;
 }
+
 @keyframes veebeez-skel-pulse {
   0%,
   100% {
