@@ -221,7 +221,7 @@ export default function ServiceCard({
         />
       </div>
 
-      {detailsOpen && (openAsDesktop ?? isDesktop) && (
+      {openAsDesktop === true && detailsOpen && (
         <ServiceDetailsDialog
           service={service}
           context={context}
@@ -238,19 +238,16 @@ export default function ServiceCard({
         />
       )}
 
-      {detailsOpen && !(openAsDesktop ?? isDesktop) && (
+      {openAsDesktop === false && (
         <ServiceDetailsDrawer
           service={service}
           context={context}
           open={detailsOpen}
-          onClose={() => {
-            setDetailsOpen(false);
-            setOpenAsDesktop(null);
-          }}
+          onClose={() => setDetailsOpen(false)}
+          onExitComplete={() => setOpenAsDesktop(null)}
           onConfirm={(item) => {
             addToCart(item);
             setDetailsOpen(false);
-            setOpenAsDesktop(null);
           }}
         />
       )}

@@ -21,6 +21,7 @@ interface Props {
   context: CartContext;
   open: boolean;
   onClose: () => void;
+  onExitComplete?: () => void;
   onConfirm: (item: ReturnType<typeof buildCartItem>) => void;
 }
 
@@ -29,6 +30,7 @@ export default function ServiceDetailsDrawer({
   context,
   open,
   onClose,
+  onExitComplete,
   onConfirm,
 }: Props) {
   const { data: detailData, isPending } = useQuery({
@@ -38,11 +40,6 @@ export default function ServiceDetailsDrawer({
   const detail = detailData as ServiceDetail | undefined;
 
   const q = useServiceQuestions(detail, service, context, onConfirm);
-
-  useEffect(() => {
-    if (!open) q.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   const detailSkeleton = (
     <div className='p-6 space-y-3'>
@@ -64,6 +61,9 @@ export default function ServiceDetailsDrawer({
       open={open}
       onOpenChange={(o) => {
         if (!o) onClose();
+      }}
+      onOpenChangeComplete={(o) => {
+        if (!o) onExitComplete?.();
       }}>
       <DrawerContent className='max-h-[88dvh] overflow-hidden rounded-t-[30px]! border border-black/10 bg-white p-0 text-black'>
         <div className='mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-black/10' />
