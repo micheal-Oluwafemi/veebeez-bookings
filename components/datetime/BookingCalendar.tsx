@@ -39,7 +39,9 @@ export default function BookingCalendar(props: BookingCalendarProps = {}) {
     configuringItemIndex !== null && configuringItemIndex < cart.length
       ? cart[configuringItemIndex]
       : null;
-  const updateCartItemSchedule = useBookingStore((s) => s.updateCartItemSchedule);
+  const updateCartItemSchedule = useBookingStore(
+    (s) => s.updateCartItemSchedule,
+  );
   const storeDate = useBookingStore((s) => s.selectedDate);
   const storeSetDate = useBookingStore((s) => s.setDate);
   const storeStylistId = useBookingStore((s) => s.selectedStylistId);
@@ -56,7 +58,8 @@ export default function BookingCalendar(props: BookingCalendarProps = {}) {
     return null;
   })();
   const effectiveStoreDate = configuringDate ?? storeDate;
-  const selectedDate = props.value !== undefined ? props.value : effectiveStoreDate;
+  const selectedDate =
+    props.value !== undefined ? props.value : effectiveStoreDate;
   // per-item write: keep global shim in sync for TimeSlotGrid's availability query
   const setDate = (date: Date) => {
     if (props.onChange) {
@@ -77,7 +80,9 @@ export default function BookingCalendar(props: BookingCalendarProps = {}) {
         // date only — store pending date via global shim; scheduled_at stays null until time chosen
         // updateCartItemSchedule with date alone would null scheduled_at, so just keep global for now
         // we still call update to clear stale scheduled_at if any
-        updateCartItemSchedule(configuringItem.service_id, { scheduled_at: null });
+        updateCartItemSchedule(configuringItem.service_id, {
+          scheduled_at: null,
+        });
       }
     }
     // always keep legacy global in sync (TimeSlotGrid reads it for availability date)

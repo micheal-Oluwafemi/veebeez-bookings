@@ -31,11 +31,7 @@ export function PanelHead({
   as?: "h1" | "h2" | "h3";
 }) {
   return (
-    <div className='mb-8 space-y-3'>
-      <p className='text-[11px] font-semibold tracking-[0.1em] text-gray-600 uppercase hidden'>
-        {eyebrow}
-      </p>
-
+    <div className='mb-8 space-y-2'>
       <As className='lg:max-w-xl max-w-sm font-cooper font-normal! text-[25px] leading-[1.05] text-black/80 md:text-[27px] lg:text-[35px]'>
         {title}
       </As>

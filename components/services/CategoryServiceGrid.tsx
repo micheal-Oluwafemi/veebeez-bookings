@@ -211,7 +211,7 @@ export default function CategoryServiceGrid() {
             <div
               className={cn(
                 "sticky top-15 lg:top-16 z-20 -mx-1 bg-[#f6f6f0]/95 px-1 py-3 backdrop-blur-sm",
-                "mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
+                " flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between",
                 "translate-y-1 opacity-0 transition-[opacity,transform] duration-[500ms] delay-[40ms] ease-out",
                 mounted && "translate-y-0 opacity-100",
               )}>
@@ -235,6 +235,7 @@ export default function CategoryServiceGrid() {
                   </button>
                 )}
               </div>
+
               {normalizedQuery ? (
                 <span className='font-plus-jakarta-sans text-xs text-[#8a6a5a] sm:text-right'>
                   {totalFilteredServices === 0

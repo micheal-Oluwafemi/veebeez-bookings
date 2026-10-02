@@ -70,9 +70,14 @@ export default function MobileBookingActionBar({
   const [reviewOpen, setReviewOpen] = useState(false);
   const [depositTouched, setDepositTouched] = useState(false);
   // per-item — legacy globals replaced; derive from cart for display
-  const selectedDate = cart[0]?.scheduled_at ? new Date(cart[0].scheduled_at.replace(" ", "T")) : null;
+  const selectedDate = cart[0]?.scheduled_at
+    ? new Date(cart[0].scheduled_at.replace(" ", "T"))
+    : null;
   const selectedTimeSlot = cart[0]?.scheduled_at
-    ? { value: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "", label: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "" }
+    ? {
+        value: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "",
+        label: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "",
+      }
     : null;
   const guestDetails = useBookingStore((s) => s.guestDetails);
   const nextStep = useBookingStore((s) => s.nextStep);
@@ -89,7 +94,8 @@ export default function MobileBookingActionBar({
   // aggregate stylist label for per-item cart
   const stylistLabel = (() => {
     if (cart.length === 0) return null;
-    if (!allConfigured) return `${cart.filter((i) => i.scheduled_at).length}/${cart.length} scheduled`;
+    if (!allConfigured)
+      return `${cart.filter((i) => i.scheduled_at).length}/${cart.length} scheduled`;
     const firstId = cart[0].stylist_id;
     const allSame = cart.every((c) => c.stylist_id === firstId);
     if (allSame) {
@@ -102,6 +108,15 @@ export default function MobileBookingActionBar({
   // deposit_amount: 0 means no partial deposit — full payment is the minimum.
   // An empty field is invalid too, so it can't slip past the minimum check.
   const effectiveDepositMin = quote ? getEffectiveDepositMin(quote) : 0;
+  const depositForBalance = depositInput ?? effectiveDepositMin ?? 0;
+  const balanceAmount = quote
+    ? Number(quote.total_amount) - Number(depositForBalance)
+    : null;
+  const showBalance =
+    quote != null &&
+    balanceAmount != null &&
+    Number.isFinite(balanceAmount) &&
+    balanceAmount > 0;
   const depositError =
     quote && (depositInput == null || depositInput < effectiveDepositMin)
       ? `Deposit must be at least ${formatCurrency(effectiveDepositMin)}`
@@ -126,8 +141,7 @@ export default function MobileBookingActionBar({
     if (!quote) return;
     const key = `${quote.deposit_amount}:${quote.total_amount}`;
     const recalculated =
-      depositQuoteKeyRef.current !== null &&
-      depositQuoteKeyRef.current !== key;
+      depositQuoteKeyRef.current !== null && depositQuoteKeyRef.current !== key;
     depositQuoteKeyRef.current = key;
     const enteredConfirm =
       prevStepForDepositRef.current !== currentStep && currentStep === 3;
@@ -270,7 +284,9 @@ export default function MobileBookingActionBar({
     if (currentStep === 3) {
       const missing: string[] = [];
       if (!allConfigured) {
-        const un = cart.filter((i) => !i.scheduled_at).map((i) => i.service_name);
+        const un = cart
+          .filter((i) => !i.scheduled_at)
+          .map((i) => i.service_name);
         missing.push(un.length ? `schedule: ${un.join(", ")}` : "schedule");
       }
       if (cart.length === 0) missing.push("service");
@@ -374,7 +390,9 @@ export default function MobileBookingActionBar({
               <button
                 type='button'
                 onClick={handleContinue}
-                disabled={isConfirming || isQuoteLoading || !!depositError || !quote}
+                disabled={
+                  isConfirming || isQuoteLoading || !!depositError || !quote
+                }
                 className='inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#a57865] px-6 py-3 font-plus-jakarta-sans text-sm font-semibold text-white transition-[transform,background-color,opacity] duration-150 ease-out hover:bg-[#8e6655] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50'>
                 {isConfirming ? (
                   <>
@@ -415,11 +433,12 @@ export default function MobileBookingActionBar({
           aria-describedby={undefined}
           className='p-0 bg-white! rounded-t-[28px]! max-h-[80vh] overflow-hidden flex flex-col md:hidden'>
           <div className='mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-[#e8ddd0]' />
-          <div className='flex items-center justify-between px-5 py-4 border-b border-[#e8ddd0] bg-white shrink-0'>
+          <div className='flex items-start justify-between px-5 py-4 border-b border-[#e8ddd0] bg-white shrink-0'>
             <div>
-              <h3 className='font-cooper text-lg leading-none text-[#1a1510]'>
+              <h3 className='text-lg pb-1.5 font-normal font-cooper leading-none text-black/80'>
                 Review your booking
               </h3>
+
               <p className='mt-1 font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
                 {cart.length} {cart.length === 1 ? "service" : "services"}{" "}
                 &bull; {formatDuration(displayDuration)}
@@ -434,9 +453,7 @@ export default function MobileBookingActionBar({
               disabled={!!(depositError && depositTouched)}
               aria-label='Close review'
               title={
-                depositError && depositTouched
-                  ? depositError
-                  : "Close review"
+                depositError && depositTouched ? depositError : "Close review"
               }
               className='flex size-8 items-center justify-center rounded-full border border-[#e8ddd0] bg-white text-[#483630] disabled:cursor-not-allowed disabled:opacity-40'>
               <X size={14} />
@@ -492,19 +509,36 @@ export default function MobileBookingActionBar({
               <div className='mt-3 space-y-1.5 border-t border-[#f3ece3] pt-3'>
                 {cart.map((item) => {
                   const isConf = !!item.scheduled_at;
-                  const st = item.stylist_id !== null ? stylists.find((s) => s.stylist_id === item.stylist_id) : null;
-                  const sName = item.stylist_id === null ? "Any Professional" : (st?.display_name ?? `Stylist #${item.stylist_id}`);
+                  const st =
+                    item.stylist_id !== null
+                      ? stylists.find((s) => s.stylist_id === item.stylist_id)
+                      : null;
+                  const sName =
+                    item.stylist_id === null
+                      ? "Any Professional"
+                      : (st?.display_name ?? `Stylist #${item.stylist_id}`);
                   let tLabel: string | null = null;
                   if (isConf && item.scheduled_at) {
                     try {
                       const d = new Date(item.scheduled_at.replace(" ", "T"));
                       tLabel = `${new Intl.DateTimeFormat("en-NG", { month: "short", day: "numeric" }).format(d)} · ${new Intl.DateTimeFormat("en-NG", { hour: "numeric", minute: "2-digit", hour12: true }).format(d)}`;
-                    } catch { tLabel = item.scheduled_at; }
+                    } catch {
+                      tLabel = item.scheduled_at;
+                    }
                   }
                   return (
-                    <div key={item.service_id} className='flex items-center justify-between gap-2'>
-                      <span className='font-plus-jakarta-sans text-xs text-[#8a6a5a] truncate'>{item.service_name}</span>
-                      <span className={isConf ? "font-plus-jakarta-sans text-xs font-medium text-[#2f6b47]" : "font-plus-jakarta-sans text-xs italic text-[#a78a6f]"}>
+                    <div
+                      key={item.service_id}
+                      className='flex items-center justify-between gap-2'>
+                      <span className='font-plus-jakarta-sans text-xs text-[#8a6a5a] truncate'>
+                        {item.service_name}
+                      </span>
+                      <span
+                        className={
+                          isConf
+                            ? "font-plus-jakarta-sans text-xs font-medium text-[#2f6b47]"
+                            : "font-plus-jakarta-sans text-xs italic text-[#a78a6f]"
+                        }>
                         {isConf ? `${sName} · ${tLabel}` : "Not scheduled"}
                       </span>
                     </div>
@@ -623,13 +657,13 @@ export default function MobileBookingActionBar({
                       aria-invalid={!!(depositError && depositTouched)}
                     />
                     <p className='mt-1.5 font-sans text-[11px] text-[#8a6a5a]'>
-                      Minimum deposit:{" "}
-                      {formatCurrency(effectiveDepositMin)} • Total:{" "}
-                      {formatCurrency(Number(quote.total_amount))}
+                      Minimum deposit: {formatCurrency(effectiveDepositMin)} •
+                      Total: {formatCurrency(Number(quote.total_amount))}
                     </p>
                     {!canEditDeposit ? (
                       <p className='mt-1.5 font-plus-jakarta-sans text-[11px] font-medium text-[#a06b12]'>
-                        Editable once every service is scheduled with a professional.
+                        Editable once every service is scheduled with a
+                        professional.
                       </p>
                     ) : depositError && depositTouched ? (
                       <p className='mt-1.5 font-plus-jakarta-sans text-xs font-medium text-[#9f2d20]'>
@@ -657,18 +691,13 @@ export default function MobileBookingActionBar({
                 )}
               </span>
             </div>
-            <p className='mt-1 text-right font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
-              Balance{" "}
-              <b>
-                {quote
-                  ? formatCurrency(
-                      Number(quote.total_amount) -
-                        Number(depositInput ?? effectiveDepositMin ?? 0),
-                    )
-                  : "-"}{" "}
-              </b>
-              due at salon
-            </p>
+
+            {showBalance && balanceAmount != null ? (
+              <p className='mt-1 text-right font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
+                Balance <b>{formatCurrency(balanceAmount)}</b> due at salon
+              </p>
+            ) : null}
+
             <button
               type='button'
               onClick={handleDrawerConfirm}

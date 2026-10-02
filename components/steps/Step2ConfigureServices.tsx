@@ -24,6 +24,7 @@ import BookingCalendar from "../datetime/BookingCalendar";
 import TimeSlotGrid from "../datetime/TimeSlotGrid";
 import { PanelHead } from "./Step1Services";
 import { LuBookCheck } from "react-icons/lu";
+import { IoCheckmarkDoneOutline, IoCheckmarkDoneSharp } from "react-icons/io5";
 
 /**
  * Switch the wizard to service `idx` with a clean slate, then scroll back
@@ -107,6 +108,22 @@ export default function Step2ConfigureServices() {
     cart.length === 0
       ? 0
       : Math.min(Math.max(activeIndexState, 0), cart.length - 1);
+
+  // Stepper pill refs — mirrors CategoryServiceGrid's pillRefs so the
+  // active pill stays scrolled into view on mobile without shifting layout.
+  const stepperRef = useRef<HTMLOListElement>(null);
+  const stepperPillRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+
+  // Keep the active stepper pill visible inside the horizontal scroll row.
+  useEffect(() => {
+    if (cart.length <= 1) return;
+    const pill = stepperPillRefs.current.get(safeIndex);
+    pill?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [safeIndex, cart.length]);
 
   // Keep store scope in sync so StylistStrip / Calendar / TimeSlotGrid
   // read + write the active wizard service
@@ -238,118 +255,109 @@ export default function Step2ConfigureServices() {
 
   return (
     <div id='step2-configure'>
-      <PanelHead
-        eyebrow='Services & Schedule'
-        title='Schedule your services'
-        sub={
-          cart.length > 1
-            ? "One service at a time — pick a professional and time, then move to the next."
-            : "Pick your preferred professional and time below."
-        }
-      />
-
-      {/* Progress summary */}
-      <div className='mb-4 flex flex-wrap items-center gap-2 text-xs font-plus-jakarta-sans'>
-        <span
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
-            allConfigured
-              ? "bg-[#e8f3ec] text-[#2f6b47]"
-              : "bg-[#fdf3e0] text-[#8a6a5a]",
-          )}>
-          {allConfigured ? (
-            <LuBookCheck size={14} />
-          ) : (
-            <AlertCircle size={14} />
-          )}
-          {configuredCount}/{cart.length} scheduled
-        </span>
-        {cart.length > 1 ? (
-          <span className='text-[#8a6a5a]'>
-            Service {safeIndex + 1} of {cart.length}
-          </span>
-        ) : null}
-        {allConfigured ? (
-          <span className='text-[#2f6b47]'>— ready to continue</span>
-        ) : null}
-      </div>
-
-      {/* Progress bar */}
-      <div
-        className='mb-5 h-1.5 overflow-hidden rounded-full bg-[#f3ece3]'
-        role='progressbar'
-        aria-valuemin={0}
-        aria-valuemax={cart.length}
-        aria-valuenow={configuredCount}
-        aria-label='Scheduling progress'>
-        <div
-          className={cn(
-            "h-full rounded-full transition-[width] duration-500 ease-out",
-            allConfigured ? "bg-[#2f6b47]" : "bg-[#a57865]",
-          )}
-          style={{ width: `${progressPct}%` }}
+      <div className='flex justify-between'>
+        <PanelHead
+          eyebrow='Services & Schedule'
+          title='Schedule your services'
+          sub={
+            cart.length > 1
+              ? "One service at a time. Pick a professional and time, then move to the next."
+              : "Pick your preferred professional and time below."
+          }
         />
+
+        <div
+          className='mb-5 h-1.5 overflow-hidden w-[30%] rounded-full bg-[#f3ece3]'
+          role='progressbar'
+          aria-valuemin={0}
+          aria-valuemax={cart.length}
+          aria-valuenow={configuredCount}
+          aria-label='Scheduling progress'>
+          <div
+            className={cn(
+              "h-full rounded-full transition-[width] duration-500 ease-out",
+              allConfigured ? "bg-[#2f6b47]" : "bg-[#a57865]",
+            )}
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
       </div>
 
-      {/* Service stepper — only when booking multiple services */}
-      {cart.length > 1 ? (
-        <ol
-          aria-label='Services to schedule'
-          className='mb-5 flex gap-2 overflow-x-auto pb-1 scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'>
-          {cart.map((item, idx) => {
-            const done = isItemConfigured(item);
-            const isActive = idx === safeIndex;
-            return (
-              <li key={item.service_id} className='shrink-0'>
-                <button
-                  type='button'
-                  onClick={() => goTo(idx)}
-                  aria-current={isActive ? "step" : undefined}
-                  className={cn(
-                    "flex max-w-[200px] items-center gap-2 rounded-full border px-3 py-2 text-left transition",
-                    isActive
-                      ? "border-[#a57865] bg-[#fdf9f5] shadow-sm ring-2 ring-[#a57865]/20"
-                      : done
-                        ? "border-[#c9e8d3] bg-[#f4faf6] hover:border-[#2f6b47]/40"
-                        : "border-[#e8ddd0] bg-white hover:border-[#a57865]/40",
-                  )}>
-                  <span
-                    className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-sm text-[11px] font-bold",
-                      done
-                        ? "bg-[#2f6b47] text-white"
-                        : isActive
-                          ? "bg-[#a57865] text-white"
-                          : "bg-[#f3ece3] text-[#8a6a5a]",
-                    )}>
-                    {done ? <LuBookCheck size={14} /> : idx + 1}
-                  </span>
-                  <span className='min-w-0'>
-                    <span className='block truncate font-plus-jakarta-sans text-xs font-semibold text-[#1a1510]'>
-                      {item.service_name}
-                    </span>
-                    <span className='block font-plus-jakarta-sans text-[10px] text-[#8a6a5a]'>
-                      {done
-                        ? "Scheduled"
-                        : isActive
-                          ? "Scheduling…"
-                          : "Not scheduled"}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-      ) : null}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows,opacity] duration-300 ease-out",
+          cart.length > 1
+            ? "[grid-template-rows:1fr] opacity-100"
+            : "[grid-template-rows:0fr] opacity-0",
+        )}
+        aria-hidden={cart.length <= 1}>
+        <div className='min-h-0 overflow-hidden'>
+          {cart.length > 1 ? (
+            <ol
+              aria-label='Services to schedule'
+              ref={stepperRef}
+              className='-mx-1 flex gap-4 overflow-x-auto overscroll-x-contain scroll-smooth px-1 pb-3 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+              {cart.map((item, idx) => {
+                const done = isItemConfigured(item);
+                const isActive = idx === safeIndex;
+                return (
+                  <li key={`${item.service_id}-${idx}`} className='shrink-0'>
+                    <button
+                      type='button'
+                      ref={(el) => {
+                        if (el) stepperPillRefs.current.set(idx, el);
+                        else stepperPillRefs.current.delete(idx);
+                      }}
+                      onClick={() => goTo(idx)}
+                      aria-current={isActive ? "step" : undefined}
+                      className={cn(
+                        "flex h-[60px] w-[168px] min-w-[168px] max-w-[168px] items-center gap-2 overflow-hidden rounded-full border pl-4 py-2 pr-5 text-left transition-[background-color,border-color,box-shadow] duration-200",
+                        done
+                          ? "border-[#c9e8d3] bg-[#f4faf6] hover:border-[#2f6b47]/40"
+                          : isActive
+                            ? "border-[#a57865] bg-[#fdf9f5] shadow-sm ring-2 ring-[#a57865]/20"
+                            : "border-[#e8ddd0] bg-white hover:border-[#a57865]/40",
+                      )}>
+                      <span
+                        className={cn(
+                          "flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                          done
+                            ? "bg-[#2f6b47] text-white"
+                            : isActive
+                              ? "bg-[#a57865] text-white"
+                              : "bg-[#f3ece3] text-[#8a6a5a]",
+                          isActive && done && "bg-[#2f6b47]",
+                        )}>
+                        {done ? <IoCheckmarkDoneSharp size={14} /> : idx + 1}
+                      </span>
+                      <span className='min-w-0 flex-1'>
+                        <span className='block truncate font-plus-jakarta-sans text-xs font-semibold'>
+                          {item.service_name}
+                        </span>
+                        <span className='block h-[14px] truncate font-plus-jakarta-sans text-[10px] leading-[14px] text-[#8a6a5a]'>
+                          {done
+                            ? "Scheduled"
+                            : isActive
+                              ? "Scheduling…"
+                              : "Not scheduled"}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : null}
+        </div>
+      </div>
 
       {/* Active service wizard panel — keyed by service so switching
           services fully resets the view (calendar month, scroll, local
           state); all scheduling data itself comes from the store */}
       <div
         key={activeItem.service_id}
-        className='overflow-hidden rounded-2xl border border-[#a57865]/30 bg-white ring-2 ring-[#a57865]/15'>
-        <div className='flex items-center gap-3 border-b border-[#f3ece3] bg-[#FFFBF8] px-4 py-4 sm:px-5'>
+        className='overflow-hidden rounded-2xl lg:bg-white lg:shadow-md '>
+        {/* <div className='flex items-center gap-3 border-b border-[#f3ece3] py-4 sm:px-5'>
           <div
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-full border",
@@ -358,11 +366,12 @@ export default function Step2ConfigureServices() {
                 : "border-[#e8ddd0] bg-[#fdf9f5] text-[#8a6a5a]",
             )}>
             {isItemConfigured(activeItem) ? (
-              <CheckCircle2 size={18} />
+              <IoCheckmarkDoneOutline size={18} />
             ) : (
               <Clock size={16} />
             )}
           </div>
+
           <div className='min-w-0 flex-1'>
             <p className='truncate font-plus-jakarta-sans text-sm font-semibold text-[#1a1510]'>
               {cart.length > 1 ? (
@@ -376,6 +385,7 @@ export default function Step2ConfigureServices() {
                 activeItem.service_name
               )}
             </p>
+            
             <p className='mt-0.5 font-plus-jakarta-sans text-xs text-[#8a6a5a]'>
               {formatDuration(activeItem.duration_minutes)}
               {activeSummary ? (
@@ -389,9 +399,9 @@ export default function Step2ConfigureServices() {
               )}
             </p>
           </div>
-        </div>
+        </div> */}
 
-        <div className='space-y-6 bg-[#FFFBF8] px-4 py-5 sm:px-5'>
+        <div className='space-y-6 py-5 sm:px-5'>
           <div id='schedule-stylist' className='scroll-mt-24'>
             <p className='mb-3 font-plus-jakarta-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#483630]'>
               1. Choose professional
@@ -415,16 +425,16 @@ export default function Step2ConfigureServices() {
 
         {/* Wizard prev/next */}
         {cart.length > 1 ? (
-          <div className='flex items-center justify-between gap-3 border-t border-[#f3ece3] bg-white px-4 py-3 sm:px-5'>
+          <div className='flex items-center justify-between gap-3 border-t border-[#f3ece3] bg-white px-4 py-7 sm:px-5'>
             <button
               type='button'
               onClick={() => goTo(safeIndex - 1)}
               disabled={isFirst}
-              className='inline-flex items-center gap-1.5 rounded-full border border-[#e8ddd0] bg-white px-4 py-2 font-plus-jakarta-sans text-xs font-semibold text-[#483630] transition hover:bg-[#fdf9f5] disabled:cursor-not-allowed disabled:opacity-40'>
+              className='inline-flex items-center gap-1.5 font-plus-jakarta-sans text-sm font-semibold text-[#483630] transition hover:bg-[#fdf9f5] disabled:cursor-not-allowed disabled:opacity-40'>
               <ArrowLeft size={14} />
               Previous
             </button>
-            <span className='font-plus-jakarta-sans text-[11px] font-medium text-[#8a6a5a]'>
+            <span className='font-plus-jakarta-sans text-[11px] md:text-sm font-medium text-[#8a6a5a]'>
               {safeIndex + 1} of {cart.length}
             </span>
             {isLast ? (
@@ -437,7 +447,7 @@ export default function Step2ConfigureServices() {
                 )}>
                 {allConfigured ? (
                   <>
-                    <CheckCircle2 size={14} /> All scheduled
+                    <IoCheckmarkDoneOutline size={14} /> All scheduled
                   </>
                 ) : (
                   "Last service"
@@ -447,7 +457,7 @@ export default function Step2ConfigureServices() {
               <button
                 type='button'
                 onClick={() => goTo(safeIndex + 1)}
-                className='inline-flex items-center gap-1.5 rounded-full bg-[#a57865] px-4 py-2 font-plus-jakarta-sans text-xs font-semibold text-white transition hover:bg-[#8e6655]'>
+                className='inline-flex items-center gap-1.5 font-plus-jakarta-sans text-sm font-semibold text-primary transition'>
                 Next service
                 <ArrowRight size={14} />
               </button>
@@ -462,11 +472,7 @@ export default function Step2ConfigureServices() {
             ? "Schedule every service to continue to Your Details. Use Next / Previous to move between services."
             : "Choose a professional, date and time to continue to Your Details."}
         </p>
-      ) : (
-        <p className='mt-4 rounded-xl bg-[#e8f3ec] px-4 py-3 font-plus-jakarta-sans text-xs font-medium text-[#2f6b47]'>
-          All services scheduled — you can review above and continue.
-        </p>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -68,17 +68,24 @@ export default function CartPanel({
   const allConfigured = cart.length > 0 && cart.every((i) => !!i.scheduled_at);
   const configuredCount = cart.filter((i) => !!i.scheduled_at).length;
   // compat aliases for legacy UI helpers (will be removed after verification)
-  const hasStylistSelection = allConfigured;
+  // NOTE: banner avatar state intentionally reads stylist_id (choice),
+  // not scheduled_at — so it updates the moment a stylist is tapped.
+  const hasStylistSelection = cart.length > 0;
   const selectedStylistId = cart[0]?.stylist_id ?? null;
-  const selectedDate = cart[0]?.scheduled_at ? new Date(cart[0].scheduled_at.replace(" ", "T")) : null;
+  const selectedDate = cart[0]?.scheduled_at
+    ? new Date(cart[0].scheduled_at.replace(" ", "T"))
+    : null;
   const selectedTimeSlot = cart[0]?.scheduled_at
-    ? { value: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "", label: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "" }
+    ? {
+        value: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "",
+        label: cart[0].scheduled_at.split(" ")[1]?.slice(0, 5) ?? "",
+      }
     : null;
   // legacy shims still in store (compat) — keep readings for verification step, not used for UI
-  const legacySelectedStylistId = useBookingStore((s) => s.selectedStylistId);
-  const legacyHasStylistSelection = useBookingStore((s) => s.hasStylistSelection);
-  const legacySelectedDate = useBookingStore((s) => s.selectedDate);
-  const legacySelectedTimeSlot = useBookingStore((s) => s.selectedTimeSlot);
+  // const legacySelectedStylistId = useBookingStore((s) => s.selectedStylistId);
+  // const legacyHasStylistSelection = useBookingStore((s) => s.hasStylistSelection);
+  // const legacySelectedDate = useBookingStore((s) => s.selectedDate);
+  // const legacySelectedTimeSlot = useBookingStore((s) => s.selectedTimeSlot);
   const isPage = variant === "page";
   const {
     data: quote,
@@ -113,17 +120,30 @@ export default function CartPanel({
     }
     return `${cart.length} professionals`;
   })();
-  const stylistInitials = (() => {
-    if (cart.length === 0) return "";
-    const firstId = cart[0].stylist_id;
-    const allSame = cart.every((c) => c.stylist_id === firstId);
-    if (allSame && firstId !== null) {
-      return stylists.find((s) => s.stylist_id === firstId)?.initials ?? "";
-    }
-    return "";
-  })();
-  const isNoPreference = allConfigured && cart.length > 0 && cart.every((c) => c.stylist_id === null) && cart.every((c) => c.stylist_id === cart[0].stylist_id);
-
+  // Per-item stylist picks for the CollectionBlock banner. One entry per
+  // cart item, deduped (same stylist twice → one circle; "any" collapses
+  // to a single shuffle circle). Updates on stylist tap — no date/time needed.
+  const stylistPicks: BannerPick[] = cart.map((c) => {
+    if (c.stylist_id === null) return { kind: "any" };
+    const s = stylists.find((x) => x.stylist_id === c.stylist_id);
+    return s
+      ? {
+          kind: "stylist",
+          id: s.stylist_id,
+          name: s.display_name,
+          initials: s.initials,
+          imageUrl: s.avatar_url,
+        }
+      : { kind: "any" };
+  });
+  const uniqueStylistPicks: BannerPick[] = stylistPicks.filter(
+    (p, i) =>
+      stylistPicks.findIndex((q) =>
+        p.kind === "stylist" && q.kind === "stylist"
+          ? q.id === p.id
+          : q.kind === p.kind,
+      ) === i,
+  );
   const currentStep = useBookingStore((s) => s.currentStep);
   const configuringItemIndex = useBookingStore((s) => s.configuringItemIndex);
   const confirmation = useBookingStore((s) => s.confirmation);
@@ -155,8 +175,7 @@ export default function CartPanel({
     if (!quote) return;
     const key = `${quote.deposit_amount}:${quote.total_amount}`;
     const recalculated =
-      depositQuoteKeyRef.current !== null &&
-      depositQuoteKeyRef.current !== key;
+      depositQuoteKeyRef.current !== null && depositQuoteKeyRef.current !== key;
     depositQuoteKeyRef.current = key;
     const enteredConfirm =
       prevStepForDepositRef.current !== currentStep && currentStep === 3;
@@ -510,18 +529,16 @@ export default function CartPanel({
             <CollectionBlock
               collection={collection ?? null}
               stylistLabel={stylistLabel}
-              stylistInitials={stylistInitials}
+              stylistPicks={uniqueStylistPicks}
               hasStylistSelection={hasStylistSelection}
-              isNoPreference={isNoPreference}
             />
           </SkeletonReveal>
         ) : (
           <CollectionBlock
             collection={null}
             stylistLabel={stylistLabel}
-            stylistInitials={stylistInitials}
+            stylistPicks={uniqueStylistPicks}
             hasStylistSelection={hasStylistSelection}
-            isNoPreference={isNoPreference}
           />
         )}
 
@@ -533,8 +550,14 @@ export default function CartPanel({
             <div className='mt-2 space-y-1.5'>
               {cart.map((item) => {
                 const isConf = !!item.scheduled_at;
-                const st = item.stylist_id !== null ? stylists.find((s) => s.stylist_id === item.stylist_id) : null;
-                const stylistName = item.stylist_id === null ? "Any Professional" : (st?.display_name ?? `Stylist #${item.stylist_id}`);
+                const st =
+                  item.stylist_id !== null
+                    ? stylists.find((s) => s.stylist_id === item.stylist_id)
+                    : null;
+                const stylistName =
+                  item.stylist_id === null
+                    ? "Any Professional"
+                    : (st?.display_name ?? `Stylist #${item.stylist_id}`);
                 let timeLabel: string | null = null;
                 if (isConf && item.scheduled_at) {
                   try {
@@ -545,10 +568,21 @@ export default function CartPanel({
                   }
                 }
                 return (
-                  <div key={item.service_id} className='flex items-center justify-between rounded-lg border border-[#f3ece3] bg-[#fdfaf5] px-3 py-2'>
-                    <span className='font-plus-jakarta-sans text-xs font-medium text-[#483630] truncate'>{item.service_name}</span>
-                    <span className={isConf ? "font-plus-jakarta-sans text-xs font-medium text-[#2f6b47] truncate" : "font-plus-jakarta-sans text-xs italic text-[#a78a6f]"}>
-                      {isConf ? `${stylistName} · ${timeLabel}` : "Not scheduled"}
+                  <div
+                    key={item.service_id}
+                    className='flex items-center justify-between rounded-lg border border-[#f3ece3] bg-[#fdfaf5] px-3 py-2'>
+                    <span className='font-plus-jakarta-sans text-xs font-medium text-[#483630] truncate'>
+                      {item.service_name}
+                    </span>
+                    <span
+                      className={
+                        isConf
+                          ? "font-plus-jakarta-sans text-xs font-medium text-[#2f6b47] truncate"
+                          : "font-plus-jakarta-sans text-xs italic text-[#a78a6f]"
+                      }>
+                      {isConf
+                        ? `${stylistName} · ${timeLabel}`
+                        : "Not scheduled"}
                     </span>
                   </div>
                 );
@@ -596,12 +630,22 @@ export default function CartPanel({
                         0,
                       );
                       const isConf = !!item.scheduled_at;
-                      const st = item.stylist_id !== null ? stylists.find((s) => s.stylist_id === item.stylist_id) : null;
-                      const stylistName = item.stylist_id === null ? "Any Professional" : (st?.display_name ?? `Stylist #${item.stylist_id}`);
+                      const st =
+                        item.stylist_id !== null
+                          ? stylists.find(
+                              (s) => s.stylist_id === item.stylist_id,
+                            )
+                          : null;
+                      const stylistName =
+                        item.stylist_id === null
+                          ? "Any Professional"
+                          : (st?.display_name ?? `Stylist #${item.stylist_id}`);
                       let schedLabel: string | null = null;
                       if (isConf && item.scheduled_at) {
                         try {
-                          const d = new Date(item.scheduled_at.replace(" ", "T"));
+                          const d = new Date(
+                            item.scheduled_at.replace(" ", "T"),
+                          );
                           schedLabel = `${new Intl.DateTimeFormat("en-NG", { month: "short", day: "numeric" }).format(d)} · ${new Intl.DateTimeFormat("en-NG", { hour: "numeric", minute: "2-digit", hour12: true }).format(d)}`;
                         } catch {
                           schedLabel = item.scheduled_at;
@@ -801,8 +845,7 @@ export default function CartPanel({
                         aria-invalid={!!(depositError && depositTouched)}
                       />
                       <p className='mt-1.5 font-sans text-[11px] text-[#8a6a5a]'>
-                        Minimum deposit:{" "}
-                        {formatCurrency(depositMin)} • Total:{" "}
+                        Minimum deposit: {formatCurrency(depositMin)} • Total:{" "}
                         {formatCurrency(Number(quote.total_amount))}
                       </p>
                       {depositError && depositTouched ? (
@@ -983,18 +1026,92 @@ function SummaryBlock({ label, value }: { label: string; value?: string }) {
   );
 }
 
+// One stylist choice for the banner avatar area. `stylist_id: null`
+// ("Any Professional") is a pick of its own and renders as shuffle.
+export type BannerPick =
+  | {
+      kind: "stylist";
+      id: number;
+      name: string;
+      initials: string;
+      imageUrl: string | null;
+    }
+  | { kind: "any" };
+
+const MAX_BANNER_PICKS = 4;
+const MAX_BADGE_PICKS = 3;
+
+// Avatar circle for one banner pick. Photo when available, initials
+// fallback, dark shuffle disc for "Any Professional" — same
+// Image/getOptimizedImageUrl recipe as StylistStrip.
+function BannerPickCircle({
+  pick,
+  variant = "lg",
+  className,
+  zIndex,
+}: {
+  pick: BannerPick;
+  variant?: "lg" | "sm";
+  className?: string;
+  zIndex?: number;
+}) {
+  const isSm = variant === "sm";
+  const imageUrl = pick.kind === "stylist" ? pick.imageUrl : null;
+  const label = pick.kind === "stylist" ? pick.name : "Any Professional";
+  const initials = pick.kind === "stylist" ? pick.initials : "";
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+        isSm ? "size-5" : "size-14",
+        pick.kind === "any" ? "bg-[#2a2420]" : "bg-white",
+        className,
+      )}
+      style={zIndex !== undefined ? { zIndex } : undefined}>
+      {pick.kind === "any" ? (
+        <RxShuffle
+          className={isSm ? "size-3 text-white" : "text-xl text-white"}
+        />
+      ) : imageUrl ? (
+        (() => {
+          const sImg = getOptimizedImageUrl(imageUrl);
+          const px = isSm ? 20 : 56;
+          return (
+            <Image
+              src={sImg}
+              alt={`${label} at Veebeez, Lekki`}
+              width={px}
+              height={px}
+              className='size-full rounded-full object-cover'
+              loading='lazy'
+              unoptimized={shouldUnoptimize(sImg)}
+            />
+          );
+        })()
+      ) : (
+        <span
+          className={
+            isSm
+              ? "font-dm-sans text-[10px] font-bold leading-none text-[#4a3429]"
+              : "font-dm-sans text-lg font-semibold text-[#4a3429]"
+          }>
+          {initials}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function CollectionBlock({
   collection,
   stylistLabel,
-  stylistInitials,
+  stylistPicks,
   hasStylistSelection,
-  isNoPreference,
 }: {
   collection: Collection | null | undefined;
   stylistLabel: string | null;
-  stylistInitials: string;
+  stylistPicks: BannerPick[];
   hasStylistSelection: boolean;
-  isNoPreference: boolean;
 }) {
   return (
     <>
@@ -1031,19 +1148,30 @@ function CollectionBlock({
             className='absolute inset-0 bg-gradient-to-t from-black/50 via-black/30 to-black/10 -z-10'
             aria-hidden='true'
           />
+
           {!hasStylistSelection ? (
             <div className='size-14 rounded-full flex bg-white/20 backdrop-blur-sm justify-center items-center overflow-hidden self-end border border-white/20'>
               <ShoppingBag size={18} className='text-white/70' />
             </div>
-          ) : isNoPreference ? (
-            <div className='size-14 rounded-full flex bg-[#2a2420] justify-center items-center overflow-hidden self-end'>
-              <RxShuffle className='text-white text-xl' />
+          ) : stylistPicks.length <= 1 && stylistPicks[0] ? (
+            <div className='self-end'>
+              <BannerPickCircle pick={stylistPicks[0]} />
             </div>
           ) : (
-            <div className='size-14 rounded-full flex bg-white justify-center items-center overflow-hidden self-end'>
-              <p className='font-dm-sans text-lg font-semibold text-[#4a3429]'>
-                {stylistInitials}
-              </p>
+            <div className='flex items-center self-end'>
+              {stylistPicks.slice(0, MAX_BANNER_PICKS).map((pick, i) => (
+                <BannerPickCircle
+                  key={pick.kind === "stylist" ? `s-${pick.id}` : "any"}
+                  pick={pick}
+                  className='-ml-4 ring-2 ring-white/70 first:ml-0'
+                  zIndex={i}
+                />
+              ))}
+              {stylistPicks.length > MAX_BANNER_PICKS ? (
+                <div className='-ml-4 flex size-14 shrink-0 items-center justify-center rounded-full bg-black/60 font-dm-sans text-sm font-semibold text-white ring-2 ring-white/70'>
+                  +{stylistPicks.length - MAX_BANNER_PICKS}
+                </div>
+              ) : null}
             </div>
           )}
 
@@ -1068,15 +1196,25 @@ function CollectionBlock({
 
             {stylistLabel ? (
               <div className='inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur-md w-fit'>
-                <span className='flex size-5 items-center justify-center rounded-full bg-white/90'>
-                  {isNoPreference ? (
-                    <RxShuffle className='size-3 text-[#4a3429]' />
-                  ) : (
-                    <span className='font-dm-sans text-[10px] font-bold leading-none text-[#4a3429]'>
-                      {stylistInitials}
+                {/* <span className='flex items-center'>
+                  {stylistPicks.slice(0, MAX_BADGE_PICKS).map((pick, i) => (
+                    <span
+                      key={pick.kind === "stylist" ? `s-${pick.id}` : "any"}
+                      className='-ml-1.5 first:ml-0'
+                      style={{ zIndex: i }}>
+                      <BannerPickCircle
+                        pick={pick}
+                        variant='sm'
+                        className='ring-1 ring-white/60'
+                      />
                     </span>
-                  )}
-                </span>
+                  ))}
+                  {stylistPicks.length > MAX_BADGE_PICKS ? (
+                    <span className='-ml-1.5 flex size-5 items-center justify-center rounded-full bg-black/60 font-dm-sans text-[8px] font-bold text-white ring-1 ring-white/60'>
+                      +{stylistPicks.length - MAX_BADGE_PICKS}
+                    </span>
+                  ) : null}
+                </span> */}
                 <p className='font-dm-sans text-[11px] font-medium tracking-wide text-white'>
                   {stylistLabel}
                 </p>

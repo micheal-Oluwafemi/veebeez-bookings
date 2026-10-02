@@ -21,7 +21,9 @@ export default function StylistStrip() {
   );
   const cart = useBookingStore((s) => s.cart);
   const configuringItemIndex = useBookingStore((s) => s.configuringItemIndex);
-  const updateCartItemSchedule = useBookingStore((s) => s.updateCartItemSchedule);
+  const updateCartItemSchedule = useBookingStore(
+    (s) => s.updateCartItemSchedule,
+  );
   // per-item scoping — when a cart item is being configured, read/write that item's stylist
   const configuringItem =
     configuringItemIndex !== null && configuringItemIndex < cart.length
@@ -30,7 +32,9 @@ export default function StylistStrip() {
   // legacy fallbacks for when no item is being configured (Step2Professional before Phase 3 merge)
   const legacySelectedStylistId = useBookingStore((s) => s.selectedStylistId);
   const legacySetStylistId = useBookingStore((s) => s.setStylistId);
-  const selectedStylistId = configuringItem ? configuringItem.stylist_id : legacySelectedStylistId;
+  const selectedStylistId = configuringItem
+    ? configuringItem.stylist_id
+    : legacySelectedStylistId;
   const setStylistId = (id: number | null) => {
     if (configuringItem) {
       updateCartItemSchedule(configuringItem.service_id, { stylist_id: id });
@@ -140,7 +144,7 @@ export default function StylistStrip() {
               const variantClasses =
                 "border border-[#e8ddd0] bg-[#fdf9f5] hover:shadow-[0_4px_10px_-10px_rgba(180,140,80,0.18)] hover:border-[#c9a96e]";
               const activeClasses = isActive
-                ? "border-primary border-[2px] bg-primary/10 shadow-[0_8px_40px_-8px_rgba(180,140,80,0.28)]"
+                ? "border-primary border-[2px] bg-primary/10 "
                 : "";
 
               return (
@@ -260,10 +264,9 @@ function NoPreferenceCard({
       type='button'
       onClick={() => setStylistId(null)}
       className={cn(
-        "group relative translate-y-3.5 rounded-2xl cursor-pointer overflow-hidden p-0 text-left opacity-0 outline-none transition-[opacity,transform,border-color,box-shadow,background-color] duration-500 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[#c9a96e]/50",
-        "border border-[#e8ddd0] bg-[#fdf9f5] hover:shadow-[0_4px_10px_-10px_rgba(180,140,80,0.18)] hover:border-[#c9a96e]",
-        isActive &&
-          "border-primary border-[2px] bg-primary/10 shadow-[0_4px_10px_-10px_rgba(180,140,80,0.28)]",
+        "group relative translate-y-3.5 rounded-2xl cursor-pointer overflow-hidden pt-4 text-left opacity-0 outline-none transition-[opacity,transform,border-color,box-shadow,background-color] duration-500 ease-out hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-[#c9a96e]/50",
+        "border border-[#e8ddd0] bg-[#fdf9f5] hover:shadow-[0_1px_0px_-0px_rgba(180,140,80,0.18)] hover:border-[#c9a96e]",
+        isActive && "border-primary border-[2px] bg-primary/10",
         mounted && "translate-y-0 opacity-100",
       )}
       style={{ transitionDelay: `${80 + index * 60}ms` }}
@@ -274,17 +277,15 @@ function NoPreferenceCard({
           isActive && "opacity-100",
         )}
       />
-      <div className='relative flex flex-col gap-3.5 px-4 pb-4 pt-4.5'>
+      <div className='relative flex flex-col justify-between gap-3.5 px-4 pb-4'>
         <div className='relative size-12 rounded-full bg-[#5a3f33] flex items-center justify-center'>
           {/* <span className='text-white text-xl'>*</span> */}
           <RxShuffle size={20} color='white' />
         </div>
+
         <div className='flex flex-col gap-0.5'>
           <span className='font-plus-jakarta-sans tracking-tight text-base lg:text-lg font-medium leading-[1.2] text-neutral-800'>
             Any Professional
-          </span>
-          <span className='mt-0.5 text-[11px] font-good-sans font-medium uppercase tracking-[0.11em] text-[#767676]'>
-            Maximum availability
           </span>
         </div>
         {/* <div

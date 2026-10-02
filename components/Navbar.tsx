@@ -13,7 +13,6 @@ import {
   LogOut,
   ShoppingBag,
   User,
-  ChevronLeft,
 } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -24,7 +23,6 @@ import {
 } from "@/components/ui/drawer";
 import { useCustomerAuthStore } from "@/store/useCustomerAuthStore";
 import { useBookingStore } from "@/store/useBookingStore";
-import { AnimatePresence, motion } from "framer-motion";
 import LoginForm from "./auth/LoginForm";
 import { CgMenuRight } from "react-icons/cg";
 import { FiInstagram } from "react-icons/fi";
@@ -63,10 +61,6 @@ export default function Navbar() {
   useEffect(() => setHasMounted(true), []);
   const isMobileQuery = useMediaQuery({ query: "(max-width: 767px)" });
   const isMobile = hasMounted ? isMobileQuery : false;
-  const currentStep = useBookingStore((s) => s.currentStep);
-  const prevStep = useBookingStore((s) => s.prevStep);
-  const confirmation = useBookingStore((s) => s.confirmation);
-  const showBackButton = pathname === "/" && !confirmation && currentStep > 1;
 
   const initials = user
     ? `${user.first_name[0] ?? ""}${user.last_name[0] ?? ""}`.toUpperCase()
@@ -78,54 +72,6 @@ export default function Navbar() {
         <div className='flex h-16 items-center justify-between gap-2 md:gap-3 lg:gap-5'>
           {/* Left: Logo + Nav */}
           <div className='flex min-w-0 flex-1 items-center gap-2 md:gap-2 lg:gap-3'>
-            <AnimatePresence initial={false}>
-              {showBackButton && (
-                <motion.div
-                  key='navbar-back'
-                  layout
-                  initial={{ width: 0, opacity: 0, x: -12, marginRight: -12 }}
-                  animate={{ width: 40, opacity: 1, x: 0, marginRight: 0 }}
-                  exit={{ width: 0, opacity: 0, x: -12, marginRight: -12 }}
-                  transition={{
-                    duration: 0.32,
-                    ease: [0.32, 0.72, 0, 1],
-                  }}
-                  className='overflow-hidden md:hidden shrink-0'>
-                  <motion.button
-                    type='button'
-                    onClick={() => {
-                      prevStep();
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
-                    aria-label='Go back to previous step'
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0.8 }}
-                    transition={{
-                      duration: 0.32,
-                      ease: [0.32, 0.72, 0, 1],
-                    }}
-                    className='flex size-10 items-center justify-center rounded-full border border-[#EDE3D3] bg-white text-[#3A2A22] shadow-sm transition-colors hover:bg-[#FDF9F5] active:bg-[#EDE3D3]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A57865]/40'>
-                    <ChevronLeft size={20} className='shrink-0' />
-                  </motion.button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence initial={false}>
-              {showBackButton && (
-                <motion.div
-                  key='navbar-divider'
-                  initial={{ opacity: 0, scaleY: 0.4 }}
-                  animate={{ opacity: 1, scaleY: 1 }}
-                  exit={{ opacity: 0, scaleY: 0.4 }}
-                  transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
-                  aria-hidden='true'
-                  className='h-6 w-px shrink-0 origin-center bg-[#EDE3D3] md:hidden'
-                />
-              )}
-            </AnimatePresence>
-
             <Link
               href='/'
               className='flex shrink-0 items-center gap-2.5 rounded-md p-1 -m-1 transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A57865]/40'>
