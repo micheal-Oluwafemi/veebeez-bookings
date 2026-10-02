@@ -234,7 +234,9 @@ export default function page() {
     mutationFn: async () => {
       if (cart.length === 0) throw new Error("Cart is empty");
       if (!cart.every(isItemConfigured)) {
-        const un = cart.filter((i) => !i.scheduled_at).map((i) => i.service_name);
+        const un = cart
+          .filter((i) => !i.scheduled_at)
+          .map((i) => i.service_name);
         throw new Error(`Please schedule: ${un.join(", ")}`);
       }
       if (!quote)
@@ -270,8 +272,12 @@ export default function page() {
         })),
         currency: quote.currency ?? cart[0]?.currency ?? "NGN",
         ...(whatsapp_number ? { whatsapp_number } : {}),
-        ...(guestDetails.specialRequests ? { notes: guestDetails.specialRequests } : {}),
-        ...(amountToPay !== undefined && amountToPay !== null ? { amount: amountToPay } : {}),
+        ...(guestDetails.specialRequests
+          ? { notes: guestDetails.specialRequests }
+          : {}),
+        ...(amountToPay !== undefined && amountToPay !== null
+          ? { amount: amountToPay }
+          : {}),
         ...(!token
           ? {
               guest_email: guestDetails.email || undefined,
@@ -286,11 +292,16 @@ export default function page() {
       delete (payload as unknown as Record<string, unknown>).scheduled_at;
       delete (payload as unknown as Record<string, unknown>).stylist_id;
       // Verify payload has no top-level scheduling keys before sending (dev check)
-      if ("scheduled_at" in (payload as unknown as Record<string, unknown>) || "stylist_id" in (payload as unknown as Record<string, unknown>)) {
+      if (
+        "scheduled_at" in (payload as unknown as Record<string, unknown>) ||
+        "stylist_id" in (payload as unknown as Record<string, unknown>)
+      ) {
         // should never happen — indicates a bug where deprecated fields were re-added
         const p = payload as unknown as Record<string, unknown>;
         if (p.scheduled_at !== undefined || p.stylist_id !== undefined) {
-          throw new Error("Payload contains forbidden top-level scheduling fields");
+          throw new Error(
+            "Payload contains forbidden top-level scheduling fields",
+          );
         }
       }
       return (await placeBooking(payload)) as unknown as {
@@ -311,7 +322,9 @@ export default function page() {
         payment_link?: string;
         checkout_url?: string;
       };
-      const data = wrapper?.data as (import("@/types/booking").Booking & Record<string, unknown>) | undefined;
+      const data = wrapper?.data as
+        | (import("@/types/booking").Booking & Record<string, unknown>)
+        | undefined;
       // Phase 5 setup: pass full booking object through (services[] carries per-service stylist/scheduled_at), not flattened globals
       if (data && data.appointment_id) {
         try {
@@ -368,8 +381,8 @@ export default function page() {
     <section className='bg-[#FAF7F3]'>
       {/* SEO: Single H1 for the booking page — targets "hair salon Lekki", "Fola Osibo" */}
       <h1 className='sr-only'>
-        Book Hair, Wig Styling & Installation, Nails, Pedicure & Lash Services at Veebeez — The Valerie Brand, Fola
-        Osibo Street, Lekki Phase 1, Lagos
+        Book Hair, Wig Styling & Installation, Nails, Pedicure & Lash Services
+        at Veebeez — The Valerie Brand, Fola Osibo Street, Lekki Phase 1, Lagos
       </h1>
       {/* URL -> collection auto-select, idempotent (see CollectionParamSync) */}
       <Suspense fallback={null}>

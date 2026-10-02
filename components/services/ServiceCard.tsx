@@ -152,7 +152,7 @@ export default function ServiceCard({
           <div>
             <h4
               className={cn(
-                "font-plus-jakarta-sans tracking-tight text-base font-normal transition-colors duration-200 flex-1 pr-1",
+                "font-plus-jakarta-sans tracking-tight text-base font-medium transition-colors duration-200 flex-1 pr-1",
                 isInCart
                   ? "text-neutral-900"
                   : "text-neutral-700 group-hover:text-[#3a2520]",
@@ -237,6 +237,7 @@ export default function ServiceCard({
           }}
         />
       )}
+
       {detailsOpen && !(openAsDesktop ?? isDesktop) && (
         <ServiceDetailsDrawer
           service={service}

@@ -109,7 +109,7 @@ export function ErrorState({
             )}>
             {resolvedMessage}
           </p>
-
+          {/* 
           {error &&
           !isInline &&
           typeof (error as { message?: string })?.message === "string" &&
@@ -119,7 +119,7 @@ export function ErrorState({
                 {String((error as { message: unknown }).message)}
               </p>
             </div>
-          ) : null}
+          ) : null} */}
         </div>
 
         {onRetry && (

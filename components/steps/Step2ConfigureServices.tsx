@@ -23,6 +23,7 @@ import StylistStrip from "../services/StylistStrip";
 import BookingCalendar from "../datetime/BookingCalendar";
 import TimeSlotGrid from "../datetime/TimeSlotGrid";
 import { PanelHead } from "./Step1Services";
+import { LuBookCheck } from "react-icons/lu";
 
 /**
  * Switch the wizard to service `idx` with a clean slate, then scroll back
@@ -257,7 +258,7 @@ export default function Step2ConfigureServices() {
               : "bg-[#fdf3e0] text-[#8a6a5a]",
           )}>
           {allConfigured ? (
-            <CheckCircle2 size={14} />
+            <LuBookCheck size={14} />
           ) : (
             <AlertCircle size={14} />
           )}
@@ -314,21 +315,25 @@ export default function Step2ConfigureServices() {
                   )}>
                   <span
                     className={cn(
-                      "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+                      "flex size-6 shrink-0 items-center justify-center rounded-sm text-[11px] font-bold",
                       done
                         ? "bg-[#2f6b47] text-white"
                         : isActive
                           ? "bg-[#a57865] text-white"
                           : "bg-[#f3ece3] text-[#8a6a5a]",
                     )}>
-                    {done ? <CheckCircle2 size={14} /> : idx + 1}
+                    {done ? <LuBookCheck size={14} /> : idx + 1}
                   </span>
                   <span className='min-w-0'>
                     <span className='block truncate font-plus-jakarta-sans text-xs font-semibold text-[#1a1510]'>
                       {item.service_name}
                     </span>
                     <span className='block font-plus-jakarta-sans text-[10px] text-[#8a6a5a]'>
-                      {done ? "Scheduled" : isActive ? "Scheduling…" : "Not scheduled"}
+                      {done
+                        ? "Scheduled"
+                        : isActive
+                          ? "Scheduling…"
+                          : "Not scheduled"}
                     </span>
                   </span>
                 </button>

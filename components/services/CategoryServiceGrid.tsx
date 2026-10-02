@@ -248,7 +248,7 @@ export default function CategoryServiceGrid() {
             <div
               ref={navRef}
               className={cn(
-                "sticky z-10 -mx-1 mb-8 flex top-[124px]! lg:top-[128px]! items-center gap-2 overflow-x-auto px-1 py-3",
+                "sticky z-10 -mx-1 mb-8 flex top-[124px]! lg:top-[128px]! items-center gap-2 overflow-x-auto px-1 pb-3",
                 "bg-[#faf6f0]/95 backdrop-blur-sm",
                 "translate-y-1 opacity-0 transition-[opacity,transform] duration-[500ms] delay-[80ms] ease-out",
                 "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
@@ -270,7 +270,7 @@ export default function CategoryServiceGrid() {
                         transitionDelay: mounted ? `${100 + i * 40}ms` : "0ms",
                       }}
                       className={cn(
-                        "relative shrink-0 whitespace-nowrap rounded-lg px-5 py-2 font-plus-jakarta-sans text-[15px] font-medium transition-all duration-250",
+                        "relative shrink-0 whitespace-nowrap rounded-full px-5 py-2 font-plus-jakarta-sans text-[15px] font-medium transition-all duration-250",
                         isActive
                           ? "bg-black/80 text-white"
                           : "bg-transparent border border-[#e0d4c4] hover:border-white text-neutral-900 hover:text-neutral-900 hover:bg-neutral-300",
