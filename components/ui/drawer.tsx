@@ -81,7 +81,7 @@ function DrawerOverlay({
     <DrawerPrimitive.Backdrop
       data-slot='drawer-overlay'
       className={cn(
-        "fixed inset-0 z-60 min-h-dvh bg-black/30 backdrop-blur-sm opacity-[max(var(--drawer-overlay-min-opacity,0),calc(1-var(--drawer-swipe-progress)))] transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] select-none data-ending-style:pointer-events-none data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-snap-points:[--drawer-overlay-min-opacity:0.5] data-starting-style:opacity-0 data-swiping:duration-0 supports-[-webkit-touch-callout:none]:absolute [-webkit-backdrop-filter:blur(8px)]",
+        "fixed inset-0 z-60 min-h-dvh bg-black/30 backdrop-blur-sm opacity-[max(var(--drawer-overlay-min-opacity,0),calc(1-var(--drawer-swipe-progress)))] transition-opacity duration-450 ease-[cubic-bezier(0.32,0.72,0,1)] select-none data-ending-style:pointer-events-none data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] data-snap-points:[--drawer-overlay-min-opacity:0.5] data-starting-style:opacity-0 data-swiping:duration-0  [-webkit-backdrop-filter:blur(8px)]",
         className,
       )}
       {...props}
