@@ -213,7 +213,7 @@ export default function Navbar() {
             {token && user ? (
               <div className='hidden items-center gap-2 md:flex lg:gap-3'>
                 <div className='flex items-center gap-1.5 md:gap-2 rounded-full border border-[#EDE3D3] bg-white px-2 py-1.5 shadow-sm shadow-black/[0.03]'>
-                  <div className='flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-[#A57865] to-[#8B5E4D] font-plus-jakarta-sans text-[11px] font-semibold text-white'>
+                  <div className='flex size-7 items-center justify-center rounded-full bg-gradient-to-r from-black/90 to-black/80 font-plus-jakarta-sans text-[11px] font-semibold text-white'>
                     {initials || <User size={14} />}
                   </div>
                   <span className='hidden pr-1 font-plus-jakarta-sans text-[13px] font-medium text-[#3A2A22] lg:inline'>
@@ -236,7 +236,7 @@ export default function Navbar() {
                   setAuthMode("login");
                   setAuthOpen(true);
                 }}
-                className='hidden rounded-full bg-gradient-to-b from-[#A57865] to-[#8B5E4D] px-4 py-2 md:px-5 md:py-2.5 font-plus-jakarta-sans text-[13px] lg:text-sm font-medium tracking-[0.02em] text-white shadow-sm shadow-[#8B5E4D]/25 transition-transform duration-200 hover:brightness-105 active:scale-[0.98] md:inline-flex'>
+                className='hidden rounded-full bg-gradient-to-r from-black/90 to-black/80 px-4 py-2 md:px-5 md:py-2.5 font-plus-jakarta-sans text-[13px] lg:text-sm font-medium tracking-[0.02em] text-white shadow-sm shadow-[#8B5E4D]/25 transition-transform duration-200 hover:brightness-105 active:scale-[0.98] md:inline-flex'>
                 Sign in
               </button>
             )}
@@ -368,7 +368,7 @@ export default function Navbar() {
                     setAuthMode("login");
                     setTimeout(() => setAuthOpen(true), 200);
                   }}
-                  className='rounded-full bg-gradient-to-b from-[#A57865] to-[#8B5E4D] py-3 font-plus-jakarta-sans text-sm font-medium text-white shadow-sm shadow-[#8B5E4D]/25'>
+                  className='rounded-full bg-gradient-to-r from-black/90 to-black/80 py-3 font-plus-jakarta-sans text-sm font-medium text-white shadow-sm shadow-black/25'>
                   Sign in
                 </button>
                 <button

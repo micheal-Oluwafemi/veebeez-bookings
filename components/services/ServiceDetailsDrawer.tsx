@@ -15,6 +15,7 @@ import type {
   ServiceDetail,
   ServiceListItem,
 } from "@/types/booking";
+import { Sheet, SheetContent } from "../ui/sheet";
 
 interface Props {
   service: ServiceListItem;
@@ -60,12 +61,14 @@ export default function ServiceDetailsDrawer({
   );
 
   return (
-    <Drawer
+    <Sheet
       open={open}
       onOpenChange={(o) => {
         if (!o) onClose();
       }}>
-      <DrawerContent className='max-h-[88dvh] overflow-hidden rounded-t-[30px]! border border-black/10 bg-white p-0 text-black'>
+      <SheetContent
+        side='bottom'
+        className='max-h-[88dvh] overflow-hidden rounded-t-[30px]! border border-black/10 bg-white p-0 text-black'>
         <div className='mx-auto mt-3 h-1.5 w-10 shrink-0 rounded-full bg-black/10' />
         <button
           type='button'
@@ -253,7 +256,7 @@ export default function ServiceDetailsDrawer({
             </SkeletonReveal>
           )}
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }
