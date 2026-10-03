@@ -227,7 +227,7 @@ export default function ServiceQuestionDrawer({
               </DrawerHeader>
 
               <div className='min-h-0 overflow-y-auto px-4 pb-5'>
-                <div className='rounded-2xl bg-gray-200/60 p-5'>
+                <div className='rounded-2xl bg-[#e8ddd0]/60 p-5'>
                   <p className='font-good-sans text-[20px] leading-snug tracking-tight text-black'>
                     {currentQuestion?.prompt}
                     {currentQuestion?.is_required ? (

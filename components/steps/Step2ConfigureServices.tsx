@@ -409,12 +409,12 @@ export default function Step2ConfigureServices() {
             <StylistStrip />
           </div>
 
+          <p className='mb-3 font-plus-jakarta-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#483630]'>
+            2. Choose date
+          </p>
           <div
             id='schedule-date'
             className='rounded-2xl border border-[#e8ddd0] bg-white p-4 scroll-mt-24'>
-            <p className='mb-3 font-plus-jakarta-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#483630]'>
-              2. Choose date
-            </p>
             <BookingCalendar />
           </div>
 

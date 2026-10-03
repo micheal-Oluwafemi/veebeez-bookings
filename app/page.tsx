@@ -20,6 +20,7 @@ import Step4Details from "@/components/steps/Step4Details";
 import BookingBreadcrumbs from "@/components/navigation/BookingBreadcrumbs";
 import BookingBackButton from "@/components/navigation/BookingBackButton";
 import MobileBookingActionBar from "@/components/MobileBookingActionBar";
+import RedirectToGatewayDialog from "@/components/booking/RedirectToGatewayDialog";
 import { showToast } from "@/components/toast/app-toast";
 import { useQuote } from "@/hooks/useQuote";
 import { getEffectiveDepositMin } from "@/lib/booking/deposit";
@@ -377,6 +378,21 @@ export default function page() {
     reviewMutation.mutate();
   };
 
+  const isRedirectingToGateway = reviewMutation.isPending;
+
+  // Warn on tab close/refresh while the booking is being created — the
+  // redirect dialog alone can't stop a tab close.
+  useEffect(() => {
+    if (!isRedirectingToGateway) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      // Required by some browsers to trigger the native prompt.
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isRedirectingToGateway]);
+
   return (
     <section className='bg-[#FAF7F3]'>
       {/* SEO: Single H1 for the booking page — targets "hair salon Lekki", "Fola Osibo" */}
@@ -469,6 +485,8 @@ export default function page() {
         onContinue={handleMobileContinue}
         isConfirming={reviewMutation.isPending}
       />
+
+      <RedirectToGatewayDialog open={reviewMutation.isPending} />
     </section>
   );
 }

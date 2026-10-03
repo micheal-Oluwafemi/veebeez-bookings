@@ -21,12 +21,16 @@ export default function TimeSlotGrid() {
     configuringItemIndex !== null && configuringItemIndex < cart.length
       ? cart[configuringItemIndex]
       : null;
-  const updateCartItemSchedule = useBookingStore((s) => s.updateCartItemSchedule);
+  const updateCartItemSchedule = useBookingStore(
+    (s) => s.updateCartItemSchedule,
+  );
   // legacy fallbacks when no item is being configured (Step3DateTime before Phase 3 merge)
   const legacySelectedDate = useBookingStore((s) => s.selectedDate);
   const legacySelectedTimeSlot = useBookingStore((s) => s.selectedTimeSlot);
   const legacySelectedStylistId = useBookingStore((s) => s.selectedStylistId);
-  const legacyHasStylistSelection = useBookingStore((s) => s.hasStylistSelection);
+  const legacyHasStylistSelection = useBookingStore(
+    (s) => s.hasStylistSelection,
+  );
   const legacySetTimeSlot = useBookingStore((s) => s.setTimeSlot);
 
   // per-item scoping: date from global shim (BookingCalendar writes there) or from item's scheduled_at
@@ -37,8 +41,12 @@ export default function TimeSlotGrid() {
     }
     return legacySelectedDate;
   })();
-  const selectedStylistId = configuringItem ? configuringItem.stylist_id : legacySelectedStylistId;
-  const hasStylistSelection = configuringItem ? true : legacyHasStylistSelection;
+  const selectedStylistId = configuringItem
+    ? configuringItem.stylist_id
+    : legacySelectedStylistId;
+  const hasStylistSelection = configuringItem
+    ? true
+    : legacyHasStylistSelection;
   // per-item service/duration for availability query (not summed cart duration)
   const serviceId = configuringItem ? configuringItem.service_id : null;
   const serviceName = configuringItem ? configuringItem.service_name : null;
@@ -52,8 +60,15 @@ export default function TimeSlotGrid() {
     refetch: refetchAvailability,
     isFetching: isAvailabilityFetching,
   } = useQuery({
-    ...getAvailabilityQueryOptions(dateStr, selectedStylistId ?? null, serviceId),
-    enabled: hasStylistSelection && !!dateStr && (configuringItem ? true : !!selectedDate),
+    ...getAvailabilityQueryOptions(
+      dateStr,
+      selectedStylistId ?? null,
+      serviceId,
+    ),
+    enabled:
+      hasStylistSelection &&
+      !!dateStr &&
+      (configuringItem ? true : !!selectedDate),
   });
 
   const slots: TimeSlot[] = useMemo(() => {
@@ -68,7 +83,10 @@ export default function TimeSlotGrid() {
       const m = Number(mStr);
       return {
         value: timePart,
-        label: Number.isFinite(h) && Number.isFinite(m) ? formatTime(h, m) : timePart,
+        label:
+          Number.isFinite(h) && Number.isFinite(m)
+            ? formatTime(h, m)
+            : timePart,
       } as TimeSlot;
     });
   }, [selectedDate, hasStylistSelection, availability]);
@@ -104,7 +122,10 @@ export default function TimeSlotGrid() {
 
   const handleSelectSlot = (slot: TimeSlot) => {
     if (configuringItem && selectedDate) {
-      updateCartItemSchedule(configuringItem.service_id, { date: selectedDate, timeSlot: slot });
+      updateCartItemSchedule(configuringItem.service_id, {
+        date: selectedDate,
+        timeSlot: slot,
+      });
     } else {
       legacySetTimeSlot(slot);
     }
@@ -115,9 +136,9 @@ export default function TimeSlotGrid() {
 
   return (
     <div id='timeslot-grid' className='scroll-mt-24'>
-      <div className='mb-3 font-plus-jakarta-sans text-lg tracking-tight font-medium text-[#483630]'>
-        Pick a time
-      </div>
+      <p className='mb-3 font-plus-jakarta-sans text-xs font-semibold uppercase tracking-[0.08em] text-[#483630]'>
+        3. Pick a time
+      </p>
       <div className='relative' aria-busy={isLoadingTimes}>
         {!hasStylistSelection ? (
           <p className='font-plus-jakarta-sans text-sm italic text-[#8a6a5a]'>
@@ -160,7 +181,7 @@ export default function TimeSlotGrid() {
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className='h-[46px] animate-pulse rounded-md bg-[#f3ece3]'
+                className='h-[46px] animate-pulse rounded-md bg-[#e8ddd0]/60'
               />
             ))}
           </div>

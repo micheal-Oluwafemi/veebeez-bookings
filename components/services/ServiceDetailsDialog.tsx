@@ -156,7 +156,7 @@ export default function ServiceDetailsDialog({
               <p className='font-plus-jakarta-sans text-[10px] font-semibold uppercase tracking-[0.1em] text-[#a57865]'>
                 Service options
               </p>
-              <h3 className='mt-2 max-w-[calc(100%-3rem)] font-plus-jakarta-sans text-xl font-semibold leading-tight text-black'>
+              <h3 className='mt-2 max-w-[calc(100%-3rem)] font-plus-jakarta-sans text-xl font-semibold leading-tight text-black/80'>
                 {q.effectiveDetail?.name ?? service.name}
               </h3>
               {q.detail?.description ? (
@@ -179,7 +179,7 @@ export default function ServiceDetailsDialog({
                 Answer a quick detail so we can price this service correctly.
               </p>
             </div>
-            <div className='mx-4 rounded-2xl bg-gray-200/60 p-5 sm:mx-7 sm:p-6'>
+            <div className='mx-4 rounded-2xl bg-[#e8ddd0]/60 p-5 sm:mx-7 sm:p-6'>
               {q.showProgress ? (
                 <>
                   <div className='mb-4 flex items-center justify-between'>
@@ -197,7 +197,7 @@ export default function ServiceDetailsDialog({
                   </div>
                 </>
               ) : null}
-              <p className='max-w-xl font-good-sans text-[20px] tracking-tight leading-snug text-black sm:text-xl'>
+              <p className='max-w-xl font-cooper font-light text-[18px] leading-snug text-black sm:text-[20px]'>
                 {q.currentQuestion?.prompt}
                 {q.currentQuestion?.is_required ? (
                   <Asterisk

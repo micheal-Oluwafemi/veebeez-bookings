@@ -177,8 +177,8 @@ export default function ServiceDetailsDrawer({
                 ) : null}
               </div>
               <div className='px-4 pb-5'>
-                <div className='rounded-2xl bg-gray-200/60 p-5'>
-                  <p className='font-good-sans text-lg md:text-[20px] leading-snug tracking-tight text-black'>
+                <div className='rounded-2xl bg-[#e8ddd0]/60 p-5'>
+                  <p className='max-w-xl font-cooper font-light text-[20px] leading-snug text-black'>
                     {q.currentQuestion?.prompt}
                     {q.currentQuestion?.is_required ? (
                       <Asterisk

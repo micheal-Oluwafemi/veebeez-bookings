@@ -225,7 +225,7 @@ export default function ServiceQuestionSheet({
                 </div>
               </AlertDialogHeader>
 
-              <div className='mx-4 rounded-2xl bg-gray-200/60 p-5  sm:mx-7 sm:p-6'>
+              <div className='mx-4 rounded-2xl bg-[#e8ddd0]/60 p-5  sm:mx-7 sm:p-6'>
                 {showProgress ? (
                   <div className='mb-4 flex items-center justify-between gap-4'>
                     <span className='font-plus-jakarta-sans text-[10px] font-semibold uppercase tracking-[0.18em] text-black/50'>

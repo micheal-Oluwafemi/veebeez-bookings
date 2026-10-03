@@ -17,6 +17,122 @@ import ServiceCard from "./ServiceCard";
 // so scrollIntoView / scroll-spy doesn't tuck content under stickies.
 const STICKY_HEADER_OFFSET = 184;
 
+// Deterministic widths so the skeleton looks natural without hydration
+// mismatch from Math.random().
+const PILL_WIDTHS = [
+  "w-[92px]",
+  "w-[124px]",
+  "w-[108px]",
+  "w-[136px]",
+  "w-[96px]",
+];
+const CARD_TITLE_WIDTHS = ["w-[70%]", "w-[55%]", "w-[62%]"];
+
+function ServiceCardSkeleton({
+  titleWidth = "w-[70%]",
+  showFrom = false,
+}: {
+  titleWidth?: string;
+  showFrom?: boolean;
+}) {
+  return (
+    <div
+      aria-hidden='true'
+      className='flex min-h-[148px] flex-col justify-between overflow-hidden rounded-2xl border-2 border-neutral-200/70 bg-white p-4'>
+      {/* Top row — mirrors ServiceCard: title + duration left, toggle right */}
+      <div className='flex items-start justify-between gap-3'>
+        <div className='min-w-0 flex-1 pr-1'>
+          {/* h4: text-base font-medium tracking-tight (~20px line) */}
+          <Skeleton
+            className={cn("h-5 rounded-md bg-[#e8ddd0]/80", titleWidth)}
+          />
+          {/* duration row: mt-1, Clock size={12} + text-[15px] */}
+          <div className='mt-2 flex items-center gap-1'>
+            <Skeleton className='size-3 rounded-full bg-[#e8ddd0]/60' />
+            <Skeleton className='h-4 w-[84px] rounded bg-[#e8ddd0]/60' />
+          </div>
+        </div>
+        {/* toggle button: size-7 rounded-full mt-0.5 */}
+        <Skeleton className='mt-0.5 size-7 shrink-0 rounded-full bg-[#e8ddd0]/70' />
+      </div>
+
+      <div className='flex-1' />
+
+      {/* Bottom — mirrors price row: mt-4, items-baseline gap-1.5 mb-2 */}
+      <div className='mt-4'>
+        <div className='mb-2 flex items-baseline gap-1.5'>
+          {showFrom && (
+            <Skeleton className='h-[10px] w-7 rounded bg-[#e8ddd0]/50' />
+          )}
+          <Skeleton className='h-[18px] w-[88px] rounded-md bg-[#e8ddd0]/80' />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoryServiceGridSkeleton() {
+  return (
+    <div aria-label='Loading services'>
+      {/* Search bar — mirrors sticky search wrapper:
+          -mx-1 px-1 py-3 + input h-10 rounded-full pl-10 pr-10 */}
+      <div className='-mx-1 flex flex-col gap-2 px-1 py-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='relative w-full'>
+          <Skeleton className='h-10 w-full rounded-full bg-[#e8ddd0]/60' />
+          {/* search icon: absolute left-3 size-4 */}
+          <Skeleton className='pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 rounded-full bg-[#e8ddd0]/80' />
+        </div>
+      </div>
+
+      {/* Pill nav — mirrors sticky pill row:
+          -mx-1 mb-8 px-1 pb-3 flex items-center gap-2,
+          pills: shrink-0 rounded-full px-5 py-2 text-[15px] (~37px tall) */}
+      <div className='-mx-1 mb-8 flex items-center gap-2 overflow-hidden px-1 pb-3'>
+        {PILL_WIDTHS.map((w, i) => (
+          <Skeleton
+            key={i}
+            className={cn("h-[37px] shrink-0 rounded-full bg-[#e8ddd0]/60", w)}
+          />
+        ))}
+      </div>
+
+      {/* Categories — mirrors: flex flex-col gap-10 */}
+      <div className='flex flex-col gap-10'>
+        {[0, 1].map((catIdx) => (
+          <div key={catIdx}>
+            {/* Header — mirrors: mb-4 flex items-center gap-4,
+                name text-base font-medium + count text-[9px] */}
+            <div className='mb-4 flex items-center gap-4'>
+              <Skeleton
+                className={cn(
+                  "h-5 rounded-md bg-[#e8ddd0]/70",
+                  catIdx === 0 ? "w-32" : "w-28",
+                )}
+              />
+              <Skeleton className='h-2.5 w-16 rounded bg-[#e8ddd0]/50' />
+            </div>
+
+            {/* Cards — mirrors: grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 */}
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+              {[0, 1, 2].map((cardIdx) => (
+                <ServiceCardSkeleton
+                  key={cardIdx}
+                  titleWidth={
+                    CARD_TITLE_WIDTHS[
+                      (catIdx * 3 + cardIdx) % CARD_TITLE_WIDTHS.length
+                    ]
+                  }
+                  showFrom={cardIdx === 0}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function CategoryServiceGrid() {
   const selectedCollectionSlug = useBookingStore(
     (s) => s.selectedCollectionSlug,
@@ -165,14 +281,11 @@ export default function CategoryServiceGrid() {
 
   if (!selectedCollectionSlug) return null;
 
-  // Only data skeleton - heading "Select a service" stays visible (per request)
-  const servicesSkeleton = (
-    <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3'>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className='h-[148px] rounded-2xl' />
-      ))}
-    </div>
-  );
+  // High-fidelity skeleton — mirrors search bar (h-10 rounded-full),
+  // pill nav (px-5 py-2 rounded-full), category headers (mb-4) and
+  // service cards (min-h-[148px] p-4 rounded-2xl). Heading
+  // "Select a service" stays visible outside SkeletonReveal (per request).
+  const servicesSkeleton = <CategoryServiceGridSkeleton />;
 
   if (isError) {
     return (
@@ -204,7 +317,7 @@ export default function CategoryServiceGrid() {
       <SkeletonReveal
         loading={isLoading}
         skeleton={servicesSkeleton}
-        minHeight={260}>
+        minHeight={560}>
         {collection ? (
           <>
             {/* Search input — sticky (replaces title stickiness) */}

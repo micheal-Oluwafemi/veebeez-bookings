@@ -11,7 +11,8 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-// Generic primitives
+// Generic primitives — warm beige base (matches CategoryServiceGridSkeleton)
+// so every skeleton shares the same tone; pass a bg- class to use a variant.
 export function Skeleton({
   className,
   ...props
@@ -19,7 +20,7 @@ export function Skeleton({
   return (
     <div
       aria-hidden
-      className={cn("animate-pulse rounded-[6px] bg-slate-300/60", className)}
+      className={cn("animate-pulse rounded-[6px] bg-[#e8ddd0]/60", className)}
       {...props}
     />
   );

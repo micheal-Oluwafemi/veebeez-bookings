@@ -42,7 +42,7 @@ export default function CollectionGrid() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className='relative w-full h-36 sm:h-55 p-4 flex flex-col justify-between overflow-hidden rounded-xl bg-gray-200/70'>
+          className='relative w-full h-36 sm:h-55 p-4 flex flex-col justify-between overflow-hidden rounded-xl bg-[#e8ddd0]/60'>
           {/* top-right active dot placeholder */}
           {/* <div className='self-end'>
             <Skeleton className='size-5 rounded-full' />
